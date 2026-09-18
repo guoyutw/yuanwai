@@ -1,0 +1,14 @@
+schema_version: 2
+per_root_policies:
+  AGENTS.md: {labels: [], size_max_mb: 1}
+  README.md: {labels: [], size_max_mb: 1}
+  CURRENT_STATE.md: {labels: [], size_max_mb: 1}
+  PRIVACY.md: {labels: [], size_max_mb: 1}
+  _internal/core/canonical/: {labels: [], size_max_mb: 1}
+  records/: {labels: [md], size_max_mb: 1}
+label_definitions:
+  md: {extensions: [.md, .markdown], risk: low}
+  yaml: {extensions: [.yaml, .yml], risk: low}
+exclude_paths:
+  - "**/.secret/**"
+  - "_internal/runtime/credentials/"
