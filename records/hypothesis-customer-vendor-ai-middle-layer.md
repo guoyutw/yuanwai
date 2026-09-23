@@ -13,11 +13,13 @@ Yuanwai may become an AI-mediated middle layer between catering customers and pa
 - AI may assist with organizing requests, forwarding information, drafting messages, and recording decisions.
 - If a customer asks to change an important business detail, such as changing tea to milk tea, AI must ask the vendor and reply based on the vendor's decision. AI does not make the business commitment itself.
 
+## Superseded next action
+
+The previous next action was a minimal LINE inbound/outbound communication and message-recording foundation. That remains a possible future implementation capability, but owner-approved current evidence now supersedes it as the immediate next action. The current next action is the concierge progressive-qualification experiment recorded in [CURRENT_STATE](../CURRENT_STATE.md) and [the candidate record](candidate-progressive-qualification-supplier-ready-brief.md).
+
 ## Evidence we still need
 
-Important customer-side and vendor-side messages should eventually be recoverable from Yuanwai-owned data so the interaction can be reviewed and learned from.
-
-The next implementation milestone remains the existing minimal LINE foundation: one test inbound message, one outbound reply, and recovery of both records. This hypothesis does not change that NEXT ACTION.
+Important customer-side and vendor-side messages should eventually be recoverable from Yuanwai-owned data so the interaction can be reviewed and learned from. We still need live evidence that customers will complete qualification through Yuanwai, that the brief reduces redundant vendor questions, and that the workflow generalizes beyond the historical supplier context.
 
 ## Explicit non-decisions
 
