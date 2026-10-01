@@ -15,7 +15,7 @@ Yuanwai may become an AI-mediated middle layer between catering customers and pa
 
 ## Superseded next action
 
-The previous next action was a minimal LINE inbound/outbound communication and message-recording foundation. That remains a possible future implementation capability, but owner-approved current evidence now supersedes it as the immediate next action. The current next action is the concierge progressive-qualification experiment recorded in [CURRENT_STATE](../CURRENT_STATE.md) and [the candidate record](candidate-progressive-qualification-supplier-ready-brief.md).
+The earlier broad LINE inbound/outbound foundation is still not required as a product platform. However, the owner has now selected AI-first customer interaction, so a minimal Yuanwai LINE OA + Messaging API / webhook loop is an execution prerequisite for the current progressive-qualification experiment. The current next action is recorded in [CURRENT_STATE](../CURRENT_STATE.md) and the AI-frontstage execution decision.
 
 ## Evidence we still need
 
