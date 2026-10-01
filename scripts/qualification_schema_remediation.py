@@ -22,13 +22,19 @@ FIELDS={
 }
 # A meaningful event requires an amount/unit, not a bare quote token.
 AMOUNT_RE=re.compile(r'(?:\d[\d,]*(?:\.\d+)?\s*(?:元|萬|万)|(?:一|二|三|四|五|六|七|八|九|十)(?:萬|万))')
+ADMIN_RE=re.compile(r'(訂金|押金|匯款|轉帳|收款|帳戶|付款|收據|發票|匯入|多匯|收訂)')
+PRICE_CONTEXT_RE=re.compile(r'(報價|估價|方案|餐點|菜單|人均|低消|費用|價格|價錢|外燴|buffet|預算|總額|總價|每人|收費|起送|開瓶費|場地費)')
+ADMIN_PRICE_CONTEXT_RE=re.compile(r'(報價|估價|方案|人均|低消|費用|價格|價錢|總額|總價|每人|收費|起送|開瓶費|場地費)')
 QUESTION_RE=re.compile(r'[?？]|(嗎|嗎|呢|可以嗎|請問|想請教|有沒有|能否|是否|多少|怎麼|如何)')
 FUTURE_RE=re.compile(r'(?:之後|再提供|再給|會再|將會|預計|想要|希望|可以提供)')
 
 def strict_price_event(text):
     if not AMOUNT_RE.search(text): return False
     if QUESTION_RE.search(text) or FUTURE_RE.search(text): return False
-    return True
+    # Administrative money is not an anchor unless the same message also
+    # carries a price/proposal context (e.g. a quoted menu total).
+    if ADMIN_RE.search(text) and not ADMIN_PRICE_CONTEXT_RE.search(text): return False
+    return bool(PRICE_CONTEXT_RE.search(text))
 
 def hit(s,terms): return any(t.lower() in s.lower() for t in terms)
 
