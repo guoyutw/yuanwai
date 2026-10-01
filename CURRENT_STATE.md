@@ -11,9 +11,14 @@ This remains a candidate direction, not a canonical final business model.
 - [Customer ↔ Yuanwai AI middle layer ↔ vendor](records/hypothesis-customer-vendor-ai-middle-layer.md) — working hypothesis only; it remains broader than the current candidate and does not by itself define a marketplace or matching decision.
 - [Progressive qualification / supplier-ready brief](records/candidate-progressive-qualification-supplier-ready-brief.md) — current candidate direction under experiment.
 
+## Current experiment setup
+
+- [Blossom single-supplier sandbox](records/decision-blossom-single-supplier-sandbox.md) — owner-approved operating setup for 2026-10–12. New Blossom catering inquiries should pass through Yuanwai first; Blossom is the sole supplier for this initial live experiment. This narrows execution only and does not define the final business model.
+- [Historical State Delta review](records/evidence-state-delta-yuanwai-review-2026-10-01.md) — public-safe synthesis of Yuanwai-relevant owner evidence that had not all been reflected in the repository.
+
 ## NEXT ACTION
 
-Run a minimal concierge / Wizard-of-Oz qualification MVP on at least 5 real new catering inquiries. For each inquiry: preserve the original natural-language request outside the public repository; extract known fields; identify missing or conditional fields; ask only the next necessary question; produce a supplier-ready brief; obtain human-in-the-loop confirmation; let the vendor continue with the existing handling/pricing process; and record public-safe experiment metrics.
+Run a minimal concierge / Wizard-of-Oz qualification MVP on at least 5 real new catering inquiries. During the initial 2026-10–12 sandbox, source these cases from real Blossom catering inquiries and route the customer through Yuanwai's LINE entry before Blossom handles pricing and fulfillment. For each inquiry: preserve the original natural-language request outside the public repository; extract known fields; identify missing or conditional fields; ask only the next necessary question; produce a supplier-ready brief; obtain human-in-the-loop confirmation; let Blossom continue with the existing handling/pricing process; and record public-safe experiment metrics.
 
 The historical reference baseline is approximately 14 messages from first contact to first vendor price (broad detector; p25 8, p75 22). It is a comparison reference, not a hard success threshold.
 
