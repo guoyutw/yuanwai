@@ -2,7 +2,11 @@
   "path": "OpenAI-compatible HTTP adapter",
   "endpoint_class": "loopback",
   "model_class": "configured",
+  "inference_turns": 2,
   "result_topics": [
+    "date"
+  ],
+  "second_turn_topics": [
     "date"
   ],
   "fixture": false,

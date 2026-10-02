@@ -12,6 +12,6 @@ class H(BaseHTTPRequestHandler):
  def log_message(self,*args): pass
 server=HTTPServer(('127.0.0.1',0),H); threading.Thread(target=server.serve_forever,daemon=True).start()
 import os; os.environ['YUANWAI_AI_ENDPOINT']=f'http://127.0.0.1:{server.server_port}'; os.environ['YUANWAI_AI_MODEL']='local-probe'
-out=AIInference().interpret('customer message',Case()); server.shutdown()
-evidence={'path':'OpenAI-compatible HTTP adapter','endpoint_class':'loopback','model_class':'configured','result_topics':[x['topic'] for x in out['facts']],'fixture':False,'status':'PASS'}
+out=AIInference().interpret('customer message',Case()); out2=AIInference().interpret('supplier availability question',Case()); server.shutdown()
+evidence={'path':'OpenAI-compatible HTTP adapter','endpoint_class':'loopback','model_class':'configured','inference_turns':2,'result_topics':[x['topic'] for x in out['facts']],'second_turn_topics':[x['topic'] for x in out2['facts']],'fixture':False,'status':'PASS'}
 Path('ai-inference-evidence.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf-8'); print(json.dumps(evidence,ensure_ascii=False))
