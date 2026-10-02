@@ -62,14 +62,15 @@ def scenarios():
    ok=fn(); out.append({'scenario':name,'status':'PASS' if ok else 'FAIL','evidence':{'state_transition':'recorded','guardrail':'recorded','facts':'topic/value_class only','raw_text':'absent'}})
   except Exception as e: out.append({'scenario':name,'status':'FAIL','error':str(e)})
  def base(): s=Simulator(None,True); s.turn('外燴 10/20 台北 30人'); return s
- run('known facts are not re-asked',lambda:(lambda s:(s.turn('想了解服務'),not any(e.get('response_class')=='ask_date' for e in s.case.events)))(base())[1])
- run('date is not availability',lambda:(lambda s:(s.turn('10/20有空嗎'),s.case.next_action=='human_gate' and s.case.feasibility=='NOT_ASSESSED'))(base())[1])
- run('feasible is not acceptance',lambda:(lambda s:(s.turn('請評估是否可行'),s.case.lifecycle!='CUSTOMER_CONTINUATION'))(base())[1])
- run('internal reason stays internal',lambda:(lambda s:(s.turn('請確認接單'),s.decide('reject','目前無法承接'),all('low value' not in json.dumps(e,ensure_ascii=False) for e in s.case.events)))(base())[-1])
- run('change invalidates downstream',lambda:(lambda s:(s.turn('請確認接單'),s.turn('改成 10/21'),any(f.status=='SUPERSEDED' for f in s.case.facts) and s.case.feasibility=='UNKNOWN' and s.case.lifecycle=='CHANGED/RECOVERY'))(base())[-1])
- run('contradictory facts fail closed',lambda:(lambda s:(s.turn('不是 10/20 改成 10/22'),s.case.next_action=='recovery'))(base())[1])
- run('reference is not promise',lambda:(lambda s:(s.turn('給我之前的菜單照片'),s.case.next_action=='reference' and s.case.feasibility=='NOT_ASSESSED'))(base())[1])
- run('mediation continues',lambda:(lambda s:(s.turn('請確認接單'),s.decide('accept','供應方確認可承接'),s.case.lifecycle=='CUSTOMER_CONTINUATION' and s.case.next_action=='answer'))(base())[-1])
+ def turns(s): return [e for e in s.case.events if e['type']=='customer_turn']
+ run('known facts are not re-asked',lambda:(lambda s:(s.turn('想了解服務'),s.case.next_action=='ask' and 'date' not in json.dumps(turns(s)[-1]['inference']) and s.case.facts[0].status=='CURRENT'))(base())[1])
+ run('date is not availability',lambda:(lambda s:(s.turn('10/20有空嗎'),s.case.next_action=='human_gate' and s.case.feasibility=='NOT_ASSESSED' and s.case.gate['authorized'] is False))(base())[1])
+ run('feasible is not acceptance',lambda:(lambda s:(s.turn('請評估是否可行'),s.case.feasibility=='NOT_ASSESSED' and s.case.lifecycle!='CUSTOMER_CONTINUATION' and s.case.next_action!='answer'))(base())[1])
+ run('internal reason stays internal',lambda:(lambda s:(s.turn('請確認接單'),s.decide('reject','目前無法承接，internal low value reason'),s.case.gate['customer_response_hash'] and all('internal low value' not in json.dumps(e,ensure_ascii=False) for e in s.case.events)))(base())[-1])
+ run('change invalidates downstream',lambda:(lambda s:(s.turn('請確認接單'),s.turn('改成 10/21'),s.case.gate is None and s.case.next_action=='recovery' and any(f.status=='SUPERSEDED' for f in s.case.facts) and s.case.feasibility=='UNKNOWN'))(base())[-1])
+ run('contradictory facts fail closed',lambda:(lambda s:(s.turn('不是 10/20 改成 10/22'),s.case.next_action=='recovery' and s.case.gate is None and len([f for f in s.case.facts if f.topic=='date'])==2))(base())[1])
+ run('reference is not promise',lambda:(lambda s:(s.turn('給我之前的菜單照片'),s.case.next_action=='reference' and s.case.feasibility=='NOT_ASSESSED' and not s.case.gate))(base())[1])
+ run('mediation continues',lambda:(lambda s:(s.turn('請確認接單'),s.decide('accept','供應方確認可承接'),s.case.lifecycle=='CUSTOMER_CONTINUATION' and s.case.next_action=='answer' and s.case.gate['authorized'] is True))(base())[-1])
  Path('simulation-evidence.json').write_text(json.dumps({'generated_at':now(),'scenarios':out,'pass':sum(x['status']=='PASS' for x in out),'total':len(out)},ensure_ascii=False,indent=2),encoding='utf-8'); return out
 def main():
  ap=argparse.ArgumentParser(); ap.add_argument('--scenario',action='store_true'); ap.add_argument('--case',default='simulation-case.json'); ap.add_argument('--fixture',action='store_true'); a=ap.parse_args()

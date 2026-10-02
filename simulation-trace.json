@@ -1,171 +1,36 @@
 {
   "public_safe": true,
-  "source": "actual simulator fixture run",
+  "source": "actual simulator execution",
   "events": [
     {
       "type": "customer_turn",
-      "state": {
-        "case_id": "case-5e5d5576",
-        "lifecycle": "UNDERSTANDING",
-        "facts": [
-          {
-            "topic": "date",
-            "value_class": "10/20",
-            "wording_hash": "f13cd67302a8b419",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "5d152569"
-          },
-          {
-            "topic": "headcount",
-            "value_class": "30人",
-            "wording_hash": "f13cd67302a8b419",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "4d5eb897"
-          },
-          {
-            "topic": "location",
-            "value_class": "台北",
-            "wording_hash": "f13cd67302a8b419",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "b81c1489"
-          },
-          {
-            "topic": "service_form",
-            "value_class": "外燴",
-            "wording_hash": "f13cd67302a8b419",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "b96f337d"
-          }
-        ],
-        "feasibility": "NOT_ASSESSED",
-        "next_action": "ask",
-        "gate": null
-      },
+      "lifecycle": "UNDERSTANDING",
+      "next_action": "ask",
+      "gate_present": false,
+      "guardrail": "PASS",
       "topics": [
         "date",
         "headcount",
         "location",
         "service_form"
       ],
-      "invalidation": null,
-      "guardrail": "PASS",
-      "response_class": "safe_template"
+      "invalidation": null
     },
     {
       "type": "customer_turn",
-      "state": {
-        "case_id": "case-5e5d5576",
-        "lifecycle": "HUMAN_GATE_PENDING",
-        "facts": [
-          {
-            "topic": "date",
-            "value_class": "10/20",
-            "wording_hash": "f13cd67302a8b419",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "5d152569"
-          },
-          {
-            "topic": "headcount",
-            "value_class": "30人",
-            "wording_hash": "f13cd67302a8b419",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "4d5eb897"
-          },
-          {
-            "topic": "location",
-            "value_class": "台北",
-            "wording_hash": "f13cd67302a8b419",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "b81c1489"
-          },
-          {
-            "topic": "service_form",
-            "value_class": "外燴",
-            "wording_hash": "f13cd67302a8b419",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "b96f337d"
-          }
-        ],
-        "feasibility": "NOT_ASSESSED",
-        "next_action": "human_gate",
-        "gate": {
-          "reason": "supplier authority required",
-          "decision_type": "availability/acceptance/price/fulfillment",
-          "brief": {
-            "fact_topics": [
-              "date",
-              "headcount",
-              "location",
-              "service_form"
-            ],
-            "certainty_classes": [
-              "CONFIRMED_BY_CUSTOMER",
-              "CONFIRMED_BY_CUSTOMER",
-              "CONFIRMED_BY_CUSTOMER",
-              "CONFIRMED_BY_CUSTOMER"
-            ],
-            "feasibility": "NOT_ASSESSED",
-            "unknowns": "No universal required fields; provisional policy remains open"
-          },
-          "authorized": false
-        }
-      },
-      "topics": [],
-      "invalidation": null,
+      "lifecycle": "HUMAN_GATE_PENDING",
+      "next_action": "human_gate",
+      "gate_present": true,
       "guardrail": "BLOCKED",
-      "response_class": "safe_template"
+      "topics": [],
+      "invalidation": null
     },
     {
       "type": "customer_turn",
-      "state": {
-        "case_id": "case-5e5d5576",
-        "lifecycle": "CHANGED/RECOVERY",
-        "facts": [
-          {
-            "topic": "headcount",
-            "value_class": "30人",
-            "wording_hash": "f13cd67302a8b419",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "4d5eb897"
-          },
-          {
-            "topic": "location",
-            "value_class": "台北",
-            "wording_hash": "f13cd67302a8b419",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "b81c1489"
-          },
-          {
-            "topic": "service_form",
-            "value_class": "外燴",
-            "wording_hash": "f13cd67302a8b419",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "b96f337d"
-          },
-          {
-            "topic": "date",
-            "value_class": "10/21",
-            "wording_hash": "489a91f208f8cec3",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "ff2f9a99"
-          }
-        ],
-        "feasibility": "UNKNOWN",
-        "next_action": "recovery",
-        "gate": null
-      },
+      "lifecycle": "CHANGED/RECOVERY",
+      "next_action": "recovery",
+      "gate_present": false,
+      "guardrail": "PASS",
       "topics": [
         "date"
       ],
@@ -176,11 +41,33 @@
           "pending_supplier_decision"
         ],
         "superseded_fact_ids": [
-          "5d152569"
+          "9b76dae1"
         ]
-      },
-      "guardrail": "PASS",
-      "response_class": "safe_template"
+      }
+    },
+    {
+      "type": "customer_turn",
+      "lifecycle": "HUMAN_GATE_PENDING",
+      "next_action": "human_gate",
+      "gate_present": true,
+      "guardrail": "BLOCKED",
+      "topics": [],
+      "invalidation": null
+    },
+    {
+      "type": "supplier_decision",
+      "lifecycle": "CUSTOMER_CONTINUATION",
+      "next_action": "answer",
+      "gate_present": true,
+      "guardrail": null,
+      "topics": [],
+      "invalidation": null
     }
-  ]
+  ],
+  "assertions": {
+    "gate_before_change": true,
+    "recovery_after_change": true,
+    "regate_after_recovery": true,
+    "continuation_after_decision": true
+  }
 }
