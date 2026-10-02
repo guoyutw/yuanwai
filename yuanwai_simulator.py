@@ -22,7 +22,7 @@ class AIInference:
   if not endpoint:
    profile=os.environ.get('YUANWAI_HERMES_PROFILE')
    if not profile: raise RuntimeError('AI inference unavailable; set YUANWAI_HERMES_PROFILE or YUANWAI_AI_ENDPOINT')
-   prompt='Return JSON only with exact schema: {facts:[{topic:string,value_class:string}],commitment_request:boolean,conflict:boolean,reference:boolean,supplier_ready:boolean,requires_human_gate:boolean,primary_next_action:string,guardrail:string}. Allowed fact topics only: date, location, headcount, service_form. Never return prose facts or alternate keys. Frozen rules: date is not availability; feasibility is not acceptance; references are not promises; changed/contradictory facts recover; supplier authority is human-gated. Current case state='+json.dumps(case.public(),ensure_ascii=False)+' Synthetic customer message='+text
+   prompt='Return JSON only with exact schema: {facts:[{topic:string,value_class:string}],commitment_request:boolean,conflict:boolean,reference:boolean,supplier_ready:boolean,requires_human_gate:boolean,primary_next_action:string,guardrail:string}. Allowed normalized fact topics: date, location, headcount, service_form, time, budget, menu_preferences, dietary, setup_logistics, invoice_admin. Preserve each distinct fact; never return prose facts or alternate keys. Set requires_human_gate=true ONLY when this current customer message asks for availability/acceptance/quote/exception/payment/fulfillment or explicitly requires supplier authority; ordinary qualification facts must set it false. Frozen rules: date is not availability; feasibility is not acceptance; references are not promises; changed/contradictory facts recover; supplier authority is human-gated. Current case state='+json.dumps(case.public(),ensure_ascii=False)+' Synthetic customer message='+text
    r=subprocess.run(['hermes','-p',profile,'-z',prompt],capture_output=True,text=True,timeout=120,check=True)
    out=json.loads(r.stdout)
    return self.normalize(json.loads(r.stdout))
@@ -32,7 +32,7 @@ class AIInference:
  def normalize(self,out):
   if not isinstance(out,dict): raise RuntimeError('AI output malformed: object required')
   facts=out.get('facts')
-  aliases={'event_date':'date','date':'date','location':'location','venue':'location','guest_count':'headcount','headcount':'headcount','service_style':'service_form','service_form':'service_form'}
+  aliases={'event_date':'date','date':'date','location':'location','venue':'location','guest_count':'headcount','headcount':'headcount','service_style':'service_form','service_form':'service_form','time':'time','event_time':'time','budget':'budget','price_range':'budget','menu':'menu_preferences','preferences':'menu_preferences','menu_preferences':'menu_preferences','dietary':'dietary','dietary_needs':'dietary','setup':'setup_logistics','logistics':'setup_logistics','setup_logistics':'setup_logistics','invoice':'invoice_admin','admin':'invoice_admin','invoice_admin':'invoice_admin'}
   if isinstance(facts,dict): facts=[{'topic':k,'value_class':v} for k,v in facts.items() if k not in ('source',)]
   if not isinstance(facts,list) or any(not isinstance(x,dict) or 'topic' not in x or ('value_class' not in x and 'value' not in x) for x in facts): raise RuntimeError('AI facts schema malformed: expected list of {topic,value_class}')
   stable=[]

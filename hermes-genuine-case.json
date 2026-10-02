@@ -1,71 +1,63 @@
 {
   "case": {
-    "case_id": "case-052b2276",
+    "case_id": "case-0bb9e04d",
     "lifecycle": "HUMAN_GATE_PENDING",
     "facts": [
       {
         "topic": "date",
-        "value_class": "stated",
-        "wording_hash": "8c4e662e1db2b264",
+        "value_class": "explicit",
+        "wording_hash": "724566b06e28097f",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "4720de3a"
+        "event_id": "1c77aab9"
       },
       {
         "topic": "location",
-        "value_class": "stated",
-        "wording_hash": "8c4e662e1db2b264",
+        "value_class": "explicit",
+        "wording_hash": "724566b06e28097f",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "9d378486"
+        "event_id": "5a7c4b18"
       },
       {
         "topic": "headcount",
-        "value_class": "stated",
-        "wording_hash": "8c4e662e1db2b264",
+        "value_class": "explicit",
+        "wording_hash": "724566b06e28097f",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "6432fb8f"
+        "event_id": "396529cb"
       },
       {
         "topic": "service_form",
-        "value_class": "stated",
-        "wording_hash": "8c4e662e1db2b264",
+        "value_class": "explicit",
+        "wording_hash": "724566b06e28097f",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "3d300494"
+        "event_id": "10d0caf4"
+      },
+      {
+        "topic": "time",
+        "value_class": "explicit",
+        "wording_hash": "724566b06e28097f",
+        "certainty": "CONFIRMED_BY_CUSTOMER",
+        "status": "CURRENT",
+        "event_id": "104778b0"
+      },
+      {
+        "topic": "budget",
+        "value_class": "explicit",
+        "wording_hash": "724566b06e28097f",
+        "certainty": "CONFIRMED_BY_CUSTOMER",
+        "status": "CURRENT",
+        "event_id": "53190c16"
       },
       {
         "topic": "date",
-        "value_class": "stated",
+        "value_class": "explicit",
         "wording_hash": "07bbe9d1269fa8b6",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "f8dcc89f"
-      },
-      {
-        "topic": "location",
-        "value_class": "stated",
-        "wording_hash": "07bbe9d1269fa8b6",
-        "certainty": "CONFIRMED_BY_CUSTOMER",
-        "status": "CURRENT",
-        "event_id": "2e86b48e"
-      },
-      {
-        "topic": "headcount",
-        "value_class": "stated",
-        "wording_hash": "07bbe9d1269fa8b6",
-        "certainty": "CONFIRMED_BY_CUSTOMER",
-        "status": "CURRENT",
-        "event_id": "1e9fc129"
-      },
-      {
-        "topic": "service_form",
-        "value_class": "stated",
-        "wording_hash": "07bbe9d1269fa8b6",
-        "certainty": "CONFIRMED_BY_CUSTOMER",
-        "status": "CURRENT",
-        "event_id": "4c9982b2"
+        "event_id": "5fe33fc2"
       }
     ],
     "feasibility": "NOT_ASSESSED",
@@ -79,13 +71,11 @@
           "location",
           "headcount",
           "service_form",
-          "date",
-          "location",
-          "headcount",
-          "service_form"
+          "time",
+          "budget",
+          "date"
         ],
         "certainty_classes": [
-          "CONFIRMED_BY_CUSTOMER",
           "CONFIRMED_BY_CUSTOMER",
           "CONFIRMED_BY_CUSTOMER",
           "CONFIRMED_BY_CUSTOMER",
@@ -102,212 +92,195 @@
   },
   "events": [
     {
-      "ts": "2026-10-02T14:16:25.210760+00:00",
+      "ts": "2026-10-02T14:34:44.307153+00:00",
       "type": "customer_turn",
       "text_redacted": true,
-      "text_hash": "8c4e662e1db2b264",
+      "text_hash": "724566b06e28097f",
       "topics": [
         "date",
         "location",
         "headcount",
-        "service_form"
+        "service_form",
+        "time",
+        "budget"
       ],
       "inference": {
         "facts": [
           {
             "topic": "date",
-            "value_class": "stated"
+            "value_class": "explicit"
           },
           {
             "topic": "location",
-            "value_class": "stated"
+            "value_class": "explicit"
           },
           {
             "topic": "headcount",
-            "value_class": "stated"
+            "value_class": "explicit"
           },
           {
             "topic": "service_form",
-            "value_class": "stated"
+            "value_class": "explicit"
+          },
+          {
+            "topic": "time",
+            "value_class": "explicit"
+          },
+          {
+            "topic": "budget",
+            "value_class": "explicit"
           }
         ],
         "commitment_request": false,
         "conflict": false,
         "reference": false,
         "supplier_ready": false,
-        "primary_next_action": "確認年份並評估檔期與服務可行性",
-        "model_requires_human_gate": true,
-        "guardrail": "不視為有檔期、不代表可行或接受訂單；供應商確認需人工核准"
+        "primary_next_action": "詢問飲食需求與場地 setup logistics",
+        "model_requires_human_gate": false,
+        "guardrail": "僅記錄需求，不承諾檔期可用、接單、報價或例外處理"
       },
       "state": {
-        "case_id": "case-052b2276",
-        "lifecycle": "HUMAN_GATE_PENDING",
+        "case_id": "case-0bb9e04d",
+        "lifecycle": "UNDERSTANDING",
         "facts": [
           {
             "topic": "date",
-            "value_class": "stated",
-            "wording_hash": "8c4e662e1db2b264",
+            "value_class": "explicit",
+            "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "4720de3a"
+            "event_id": "1c77aab9"
           },
           {
             "topic": "location",
-            "value_class": "stated",
-            "wording_hash": "8c4e662e1db2b264",
+            "value_class": "explicit",
+            "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "9d378486"
+            "event_id": "5a7c4b18"
           },
           {
             "topic": "headcount",
-            "value_class": "stated",
-            "wording_hash": "8c4e662e1db2b264",
+            "value_class": "explicit",
+            "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "6432fb8f"
+            "event_id": "396529cb"
           },
           {
             "topic": "service_form",
-            "value_class": "stated",
-            "wording_hash": "8c4e662e1db2b264",
+            "value_class": "explicit",
+            "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "3d300494"
+            "event_id": "10d0caf4"
+          },
+          {
+            "topic": "time",
+            "value_class": "explicit",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "104778b0"
+          },
+          {
+            "topic": "budget",
+            "value_class": "explicit",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "53190c16"
           }
         ],
         "feasibility": "NOT_ASSESSED",
-        "next_action": "human_gate",
-        "gate": {
-          "reason": "supplier authority required",
-          "decision_type": "availability/acceptance/price/fulfillment",
-          "brief": {
-            "fact_topics": [
-              "date",
-              "location",
-              "headcount",
-              "service_form"
-            ],
-            "certainty_classes": [
-              "CONFIRMED_BY_CUSTOMER",
-              "CONFIRMED_BY_CUSTOMER",
-              "CONFIRMED_BY_CUSTOMER",
-              "CONFIRMED_BY_CUSTOMER"
-            ],
-            "feasibility": "NOT_ASSESSED",
-            "unknowns": "No universal required fields; provisional policy remains open"
-          },
-          "authorized": false
-        }
+        "next_action": "ask",
+        "gate": null
       },
-      "guardrail": "BLOCKED",
+      "guardrail": "PASS",
       "response_class": "safe_template"
     },
     {
-      "ts": "2026-10-02T14:16:38.566504+00:00",
+      "ts": "2026-10-02T14:34:58.395361+00:00",
       "type": "customer_turn",
       "text_redacted": true,
       "text_hash": "07bbe9d1269fa8b6",
       "topics": [
-        "date",
-        "location",
-        "headcount",
-        "service_form"
+        "date"
       ],
       "inference": {
         "facts": [
           {
             "topic": "date",
-            "value_class": "stated"
-          },
-          {
-            "topic": "location",
-            "value_class": "stated"
-          },
-          {
-            "topic": "headcount",
-            "value_class": "stated"
-          },
-          {
-            "topic": "service_form",
-            "value_class": "stated"
+            "value_class": "explicit"
           }
         ],
         "commitment_request": true,
         "conflict": false,
         "reference": false,
         "supplier_ready": false,
-        "primary_next_action": "human_gate",
+        "primary_next_action": "human_review_availability_for_date",
         "model_requires_human_gate": true,
-        "guardrail": "Do not confirm availability, acceptance, price, or fulfillment; obtain supplier authority first."
+        "guardrail": "Do not imply availability, acceptance, or commitment before supplier approval."
       },
       "state": {
-        "case_id": "case-052b2276",
+        "case_id": "case-0bb9e04d",
         "lifecycle": "HUMAN_GATE_PENDING",
         "facts": [
           {
             "topic": "date",
-            "value_class": "stated",
-            "wording_hash": "8c4e662e1db2b264",
+            "value_class": "explicit",
+            "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "4720de3a"
+            "event_id": "1c77aab9"
           },
           {
             "topic": "location",
-            "value_class": "stated",
-            "wording_hash": "8c4e662e1db2b264",
+            "value_class": "explicit",
+            "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "9d378486"
+            "event_id": "5a7c4b18"
           },
           {
             "topic": "headcount",
-            "value_class": "stated",
-            "wording_hash": "8c4e662e1db2b264",
+            "value_class": "explicit",
+            "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "6432fb8f"
+            "event_id": "396529cb"
           },
           {
             "topic": "service_form",
-            "value_class": "stated",
-            "wording_hash": "8c4e662e1db2b264",
+            "value_class": "explicit",
+            "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "3d300494"
+            "event_id": "10d0caf4"
+          },
+          {
+            "topic": "time",
+            "value_class": "explicit",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "104778b0"
+          },
+          {
+            "topic": "budget",
+            "value_class": "explicit",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "53190c16"
           },
           {
             "topic": "date",
-            "value_class": "stated",
+            "value_class": "explicit",
             "wording_hash": "07bbe9d1269fa8b6",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "f8dcc89f"
-          },
-          {
-            "topic": "location",
-            "value_class": "stated",
-            "wording_hash": "07bbe9d1269fa8b6",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "2e86b48e"
-          },
-          {
-            "topic": "headcount",
-            "value_class": "stated",
-            "wording_hash": "07bbe9d1269fa8b6",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "1e9fc129"
-          },
-          {
-            "topic": "service_form",
-            "value_class": "stated",
-            "wording_hash": "07bbe9d1269fa8b6",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "4c9982b2"
+            "event_id": "5fe33fc2"
           }
         ],
         "feasibility": "NOT_ASSESSED",
@@ -321,13 +294,11 @@
               "location",
               "headcount",
               "service_form",
-              "date",
-              "location",
-              "headcount",
-              "service_form"
+              "time",
+              "budget",
+              "date"
             ],
             "certainty_classes": [
-              "CONFIRMED_BY_CUSTOMER",
               "CONFIRMED_BY_CUSTOMER",
               "CONFIRMED_BY_CUSTOMER",
               "CONFIRMED_BY_CUSTOMER",

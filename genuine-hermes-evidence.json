@@ -8,10 +8,10 @@
   "trace": [
     {
       "type": "customer_turn",
-      "lifecycle": "HUMAN_GATE_PENDING",
-      "next_action": "human_gate",
-      "gate": true,
-      "guardrail": "BLOCKED",
+      "lifecycle": "UNDERSTANDING",
+      "next_action": "ask",
+      "gate": false,
+      "guardrail": "PASS",
       "structured_consumed": true
     },
     {
