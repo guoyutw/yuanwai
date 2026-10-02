@@ -1,40 +1,100 @@
 {
   "case": {
-    "case_id": "case-5059ed1a",
+    "case_id": "case-052b2276",
     "lifecycle": "HUMAN_GATE_PENDING",
     "facts": [
       {
-        "topic": "model_fact",
-        "value_class": "餐飲形式：歐式自助餐",
+        "topic": "date",
+        "value_class": "stated",
         "wording_hash": "8c4e662e1db2b264",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "cad9a428"
+        "event_id": "4720de3a"
       },
       {
-        "topic": "model_fact",
-        "value_class": "餐飲形式：歐式自助餐",
-        "wording_hash": "b7dbc87b83651f36",
+        "topic": "location",
+        "value_class": "stated",
+        "wording_hash": "8c4e662e1db2b264",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "fdbd28d1"
+        "event_id": "9d378486"
+      },
+      {
+        "topic": "headcount",
+        "value_class": "stated",
+        "wording_hash": "8c4e662e1db2b264",
+        "certainty": "CONFIRMED_BY_CUSTOMER",
+        "status": "CURRENT",
+        "event_id": "6432fb8f"
+      },
+      {
+        "topic": "service_form",
+        "value_class": "stated",
+        "wording_hash": "8c4e662e1db2b264",
+        "certainty": "CONFIRMED_BY_CUSTOMER",
+        "status": "CURRENT",
+        "event_id": "3d300494"
+      },
+      {
+        "topic": "date",
+        "value_class": "stated",
+        "wording_hash": "07bbe9d1269fa8b6",
+        "certainty": "CONFIRMED_BY_CUSTOMER",
+        "status": "CURRENT",
+        "event_id": "f8dcc89f"
+      },
+      {
+        "topic": "location",
+        "value_class": "stated",
+        "wording_hash": "07bbe9d1269fa8b6",
+        "certainty": "CONFIRMED_BY_CUSTOMER",
+        "status": "CURRENT",
+        "event_id": "2e86b48e"
+      },
+      {
+        "topic": "headcount",
+        "value_class": "stated",
+        "wording_hash": "07bbe9d1269fa8b6",
+        "certainty": "CONFIRMED_BY_CUSTOMER",
+        "status": "CURRENT",
+        "event_id": "1e9fc129"
+      },
+      {
+        "topic": "service_form",
+        "value_class": "stated",
+        "wording_hash": "07bbe9d1269fa8b6",
+        "certainty": "CONFIRMED_BY_CUSTOMER",
+        "status": "CURRENT",
+        "event_id": "4c9982b2"
       }
     ],
-    "feasibility": "UNKNOWN",
+    "feasibility": "NOT_ASSESSED",
     "next_action": "human_gate",
     "gate": {
       "reason": "supplier authority required",
       "decision_type": "availability/acceptance/price/fulfillment",
       "brief": {
         "fact_topics": [
-          "model_fact",
-          "model_fact"
+          "date",
+          "location",
+          "headcount",
+          "service_form",
+          "date",
+          "location",
+          "headcount",
+          "service_form"
         ],
         "certainty_classes": [
           "CONFIRMED_BY_CUSTOMER",
+          "CONFIRMED_BY_CUSTOMER",
+          "CONFIRMED_BY_CUSTOMER",
+          "CONFIRMED_BY_CUSTOMER",
+          "CONFIRMED_BY_CUSTOMER",
+          "CONFIRMED_BY_CUSTOMER",
+          "CONFIRMED_BY_CUSTOMER",
           "CONFIRMED_BY_CUSTOMER"
         ],
-        "feasibility": "UNKNOWN",
+        "feasibility": "NOT_ASSESSED",
         "unknowns": "No universal required fields; provisional policy remains open"
       },
       "authorized": false
@@ -42,132 +102,241 @@
   },
   "events": [
     {
-      "ts": "2026-10-02T13:53:37.380370+00:00",
+      "ts": "2026-10-02T14:16:25.210760+00:00",
       "type": "customer_turn",
       "text_redacted": true,
       "text_hash": "8c4e662e1db2b264",
       "topics": [
-        "model_fact",
-        "model_fact",
-        "model_fact",
-        "model_fact"
+        "date",
+        "location",
+        "headcount",
+        "service_form"
       ],
       "inference": {
         "facts": [
           {
-            "topic": "model_fact",
-            "value_class": "日期：10/20"
+            "topic": "date",
+            "value_class": "stated"
           },
           {
-            "topic": "model_fact",
-            "value_class": "地點：中壢"
+            "topic": "location",
+            "value_class": "stated"
           },
           {
-            "topic": "model_fact",
-            "value_class": "人數：約30人"
+            "topic": "headcount",
+            "value_class": "stated"
           },
           {
-            "topic": "model_fact",
-            "value_class": "餐飲形式：歐式自助餐"
+            "topic": "service_form",
+            "value_class": "stated"
           }
         ],
         "commitment_request": false,
         "conflict": false,
         "reference": false,
         "supplier_ready": false,
-        "primary_next_action": "向客戶詢問活動年份、開始與結束時間、預算範圍、場地樓層與設備，以及是否需要人員服務、餐具、桌椅與飲料。",
-        "guardrail": "目前僅記錄客戶需求；日期不等於有空檔，可行性不等於接受，任何參考資訊不構成承諾。若後續出現更正或矛盾事實，須先重新確認；供應商是否接單須經人工確認。"
-      },
-      "invalidation": {
-        "dependent_state": [
-          "feasibility",
-          "supplier_ready_brief",
-          "pending_supplier_decision"
-        ],
-        "superseded_fact_ids": [
-          "95709c71"
-        ]
+        "primary_next_action": "確認年份並評估檔期與服務可行性",
+        "model_requires_human_gate": true,
+        "guardrail": "不視為有檔期、不代表可行或接受訂單；供應商確認需人工核准"
       },
       "state": {
-        "case_id": "case-5059ed1a",
-        "lifecycle": "UNDERSTANDING",
-        "facts": [
-          {
-            "topic": "model_fact",
-            "value_class": "餐飲形式：歐式自助餐",
-            "wording_hash": "8c4e662e1db2b264",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "cad9a428"
-          }
-        ],
-        "feasibility": "UNKNOWN",
-        "next_action": "ask",
-        "gate": null
-      },
-      "guardrail": "PASS",
-      "response_class": "safe_template"
-    },
-    {
-      "ts": "2026-10-02T13:53:47.828404+00:00",
-      "type": "customer_turn",
-      "text_redacted": true,
-      "text_hash": "b7dbc87b83651f36",
-      "topics": [
-        "model_fact"
-      ],
-      "inference": {
-        "facts": [
-          {
-            "topic": "model_fact",
-            "value_class": "餐飲形式：歐式自助餐",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT"
-          }
-        ],
-        "commitment_request": true,
-        "conflict": false,
-        "reference": false,
-        "supplier_ready": false,
-        "primary_next_action": "請客戶提供所指日期，之後再向供應商確認檔期；在供應商明確確認前，不得承諾可接案。",
-        "guardrail": "日期不等於檔期可用；可行性不等於接受；任何參考資料不構成承諾；若出現變更或矛盾事實，須重新核對；供應商權限須經人工確認。"
-      },
-      "state": {
-        "case_id": "case-5059ed1a",
+        "case_id": "case-052b2276",
         "lifecycle": "HUMAN_GATE_PENDING",
         "facts": [
           {
-            "topic": "model_fact",
-            "value_class": "餐飲形式：歐式自助餐",
+            "topic": "date",
+            "value_class": "stated",
             "wording_hash": "8c4e662e1db2b264",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "cad9a428"
+            "event_id": "4720de3a"
           },
           {
-            "topic": "model_fact",
-            "value_class": "餐飲形式：歐式自助餐",
-            "wording_hash": "b7dbc87b83651f36",
+            "topic": "location",
+            "value_class": "stated",
+            "wording_hash": "8c4e662e1db2b264",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "fdbd28d1"
+            "event_id": "9d378486"
+          },
+          {
+            "topic": "headcount",
+            "value_class": "stated",
+            "wording_hash": "8c4e662e1db2b264",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "6432fb8f"
+          },
+          {
+            "topic": "service_form",
+            "value_class": "stated",
+            "wording_hash": "8c4e662e1db2b264",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "3d300494"
           }
         ],
-        "feasibility": "UNKNOWN",
+        "feasibility": "NOT_ASSESSED",
         "next_action": "human_gate",
         "gate": {
           "reason": "supplier authority required",
           "decision_type": "availability/acceptance/price/fulfillment",
           "brief": {
             "fact_topics": [
-              "model_fact",
-              "model_fact"
+              "date",
+              "location",
+              "headcount",
+              "service_form"
             ],
             "certainty_classes": [
               "CONFIRMED_BY_CUSTOMER",
+              "CONFIRMED_BY_CUSTOMER",
+              "CONFIRMED_BY_CUSTOMER",
               "CONFIRMED_BY_CUSTOMER"
             ],
-            "feasibility": "UNKNOWN",
+            "feasibility": "NOT_ASSESSED",
+            "unknowns": "No universal required fields; provisional policy remains open"
+          },
+          "authorized": false
+        }
+      },
+      "guardrail": "BLOCKED",
+      "response_class": "safe_template"
+    },
+    {
+      "ts": "2026-10-02T14:16:38.566504+00:00",
+      "type": "customer_turn",
+      "text_redacted": true,
+      "text_hash": "07bbe9d1269fa8b6",
+      "topics": [
+        "date",
+        "location",
+        "headcount",
+        "service_form"
+      ],
+      "inference": {
+        "facts": [
+          {
+            "topic": "date",
+            "value_class": "stated"
+          },
+          {
+            "topic": "location",
+            "value_class": "stated"
+          },
+          {
+            "topic": "headcount",
+            "value_class": "stated"
+          },
+          {
+            "topic": "service_form",
+            "value_class": "stated"
+          }
+        ],
+        "commitment_request": true,
+        "conflict": false,
+        "reference": false,
+        "supplier_ready": false,
+        "primary_next_action": "human_gate",
+        "model_requires_human_gate": true,
+        "guardrail": "Do not confirm availability, acceptance, price, or fulfillment; obtain supplier authority first."
+      },
+      "state": {
+        "case_id": "case-052b2276",
+        "lifecycle": "HUMAN_GATE_PENDING",
+        "facts": [
+          {
+            "topic": "date",
+            "value_class": "stated",
+            "wording_hash": "8c4e662e1db2b264",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "4720de3a"
+          },
+          {
+            "topic": "location",
+            "value_class": "stated",
+            "wording_hash": "8c4e662e1db2b264",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "9d378486"
+          },
+          {
+            "topic": "headcount",
+            "value_class": "stated",
+            "wording_hash": "8c4e662e1db2b264",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "6432fb8f"
+          },
+          {
+            "topic": "service_form",
+            "value_class": "stated",
+            "wording_hash": "8c4e662e1db2b264",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "3d300494"
+          },
+          {
+            "topic": "date",
+            "value_class": "stated",
+            "wording_hash": "07bbe9d1269fa8b6",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "f8dcc89f"
+          },
+          {
+            "topic": "location",
+            "value_class": "stated",
+            "wording_hash": "07bbe9d1269fa8b6",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "2e86b48e"
+          },
+          {
+            "topic": "headcount",
+            "value_class": "stated",
+            "wording_hash": "07bbe9d1269fa8b6",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "1e9fc129"
+          },
+          {
+            "topic": "service_form",
+            "value_class": "stated",
+            "wording_hash": "07bbe9d1269fa8b6",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "4c9982b2"
+          }
+        ],
+        "feasibility": "NOT_ASSESSED",
+        "next_action": "human_gate",
+        "gate": {
+          "reason": "supplier authority required",
+          "decision_type": "availability/acceptance/price/fulfillment",
+          "brief": {
+            "fact_topics": [
+              "date",
+              "location",
+              "headcount",
+              "service_form",
+              "date",
+              "location",
+              "headcount",
+              "service_form"
+            ],
+            "certainty_classes": [
+              "CONFIRMED_BY_CUSTOMER",
+              "CONFIRMED_BY_CUSTOMER",
+              "CONFIRMED_BY_CUSTOMER",
+              "CONFIRMED_BY_CUSTOMER",
+              "CONFIRMED_BY_CUSTOMER",
+              "CONFIRMED_BY_CUSTOMER",
+              "CONFIRMED_BY_CUSTOMER",
+              "CONFIRMED_BY_CUSTOMER"
+            ],
+            "feasibility": "NOT_ASSESSED",
             "unknowns": "No universal required fields; provisional policy remains open"
           },
           "authorized": false

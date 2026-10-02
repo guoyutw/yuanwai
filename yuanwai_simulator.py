@@ -22,22 +22,29 @@ class AIInference:
   if not endpoint:
    profile=os.environ.get('YUANWAI_HERMES_PROFILE')
    if not profile: raise RuntimeError('AI inference unavailable; set YUANWAI_HERMES_PROFILE or YUANWAI_AI_ENDPOINT')
-   prompt='Return JSON only with keys facts, commitment_request, conflict, reference, supplier_ready, primary_next_action, guardrail. Frozen rules: date is not availability; feasibility is not acceptance; references are not promises; changed/contradictory facts recover; supplier authority is human-gated. Current case state='+json.dumps(case.public(),ensure_ascii=False)+' Synthetic customer message='+text
+   prompt='Return JSON only with exact schema: {facts:[{topic:string,value_class:string}],commitment_request:boolean,conflict:boolean,reference:boolean,supplier_ready:boolean,requires_human_gate:boolean,primary_next_action:string,guardrail:string}. Allowed fact topics only: date, location, headcount, service_form. Never return prose facts or alternate keys. Frozen rules: date is not availability; feasibility is not acceptance; references are not promises; changed/contradictory facts recover; supplier authority is human-gated. Current case state='+json.dumps(case.public(),ensure_ascii=False)+' Synthetic customer message='+text
    r=subprocess.run(['hermes','-p',profile,'-z',prompt],capture_output=True,text=True,timeout=120,check=True)
    out=json.loads(r.stdout)
-   p=self.normalize(out); p['conflict']=bool(re.search('改成|不是|衝突',text)); p['reference']=bool(re.search('照片|範例|菜單|之前',text)); p['commitment_request']=bool(re.search('可用|有空|接嗎|接單|接受|報價|價格|承諾',text)); return p
+   return self.normalize(json.loads(r.stdout))
   prompt={'message':text,'current_state':case.public(),'instruction':'Return JSON only: facts array or object, commitment_request boolean, conflict boolean, reference boolean, supplier_ready boolean, primary_next_action string. Never invent supplier commitments.'}
   req=urllib.request.Request(endpoint,data=json.dumps({'model':os.environ.get('YUANWAI_AI_MODEL','local'),'messages':[{'role':'user','content':json.dumps(prompt,ensure_ascii=False)}],'temperature':0}).encode(),headers={'Content-Type':'application/json'})
   with urllib.request.urlopen(req,timeout=30) as r: return self.normalize(json.loads(json.load(r)['choices'][0]['message']['content']))
  def normalize(self,out):
-  facts=out.get('facts',[])
-  if isinstance(facts,dict): facts=[{'topic':k,'value_class':str(v)} for k,v in facts.items() if k not in ('source',)]
-  if isinstance(facts,list): facts=[x if isinstance(x,dict) else {'topic':'model_fact','value_class':str(x)} for x in facts]
-  def flag(v):
-   if isinstance(v,bool): return v
-   return not any(x in str(v) for x in ('未','沒有','尚未','無','不代表','不得'))
-  action=str(out.get('primary_next_action',out.get('next_action',''))); guard=str(out.get('guardrail',''))
-  return {'facts':facts,'commitment_request':flag(out.get('commitment_request')),'conflict':flag(out.get('conflict')),'reference':flag(out.get('reference')),'supplier_ready':flag(out.get('supplier_ready')),'primary_next_action':action,'model_requires_human_gate':('human_gate' in action.lower() or 'human gate' in action.lower() or 'supplier authority' in guard.lower()),'guardrail':out.get('guardrail')}
+  if not isinstance(out,dict): raise RuntimeError('AI output malformed: object required')
+  facts=out.get('facts')
+  aliases={'event_date':'date','date':'date','location':'location','venue':'location','guest_count':'headcount','headcount':'headcount','service_style':'service_form','service_form':'service_form'}
+  if isinstance(facts,dict): facts=[{'topic':k,'value_class':v} for k,v in facts.items() if k not in ('source',)]
+  if not isinstance(facts,list) or any(not isinstance(x,dict) or 'topic' not in x or ('value_class' not in x and 'value' not in x) for x in facts): raise RuntimeError('AI facts schema malformed: expected list of {topic,value_class}')
+  stable=[]
+  for x in facts:
+   topic=aliases.get(str(x['topic']))
+   if not topic: raise RuntimeError('AI fact topic unnormalizable: '+str(x['topic']))
+   stable.append({'topic':topic,'value_class':str(x.get('value_class',x.get('value')))})
+  required={'commitment_request','conflict','reference','supplier_ready','requires_human_gate'}
+  if not required.issubset(out): raise RuntimeError('AI structured authority fields missing')
+  if not all(isinstance(out[k],bool) for k in required): raise RuntimeError('AI authority fields must be boolean')
+  action=str(out.get('primary_next_action',''))
+  return {'facts':stable,'commitment_request':out['commitment_request'],'conflict':out['conflict'],'reference':out['reference'],'supplier_ready':out['supplier_ready'],'primary_next_action':action,'model_requires_human_gate':out['requires_human_gate'],'guardrail':out.get('guardrail')}
  def fixture_infer(self,text):
   pats={'date':r'\d{1,2}[月/]\d{1,2}日?','headcount':r'\d+\s*(?:人|位|份)','location':r'台北|新竹|台中|高雄|桃園|到府','service_form':r'外燴|餐盒|自助餐|buffet|桌菜'}; facts=[]
   for t,p in pats.items():
