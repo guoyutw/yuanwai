@@ -7,13 +7,15 @@ def now(): return datetime.now(timezone.utc).isoformat()
 def h(s): return hashlib.sha256(s.encode()).hexdigest()[:16]
 @dataclass
 class Fact:
- topic:str; value_class:str; wording_hash:str; certainty:str='STATED'; status:str='CURRENT'; event_id:str=''
+ topic:str; value_class:str; wording_hash:str; certainty:str='STATED'; status:str='CURRENT'; event_id:str=''; value:str=''
 @dataclass
 class Case:
  case_id:str=field(default_factory=lambda:'case-'+uuid.uuid4().hex[:8]); lifecycle:str='INTAKE'; facts:list[Fact]=field(default_factory=list); feasibility:str='NOT_ASSESSED'; next_action:str='ask'; gate:dict|None=None; events:list[dict]=field(default_factory=list)
  def public(self):
   g=None if not self.gate else {k:v for k,v in self.gate.items() if k not in ('customer_response','internal_reason')}
-  return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[asdict(f) for f in self.facts if f.status=='CURRENT'],'feasibility':self.feasibility,'next_action':self.next_action,'gate':g}
+  return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[asdict(x) for x in self.facts if x.status=='CURRENT'],'feasibility':self.feasibility,'next_action':self.next_action,'gate':g}
+ def internal(self):
+  return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[{'topic':f.topic,'value':f.value or f.value_class,'certainty':f.certainty,'status':f.status} for f in self.facts if f.status=='CURRENT'],'feasibility':self.feasibility,'next_action':self.next_action}
 class AIInference:
  def __init__(self,fixture=False): self.fixture=fixture
  def interpret(self,text,case):
@@ -22,7 +24,7 @@ class AIInference:
   if not endpoint:
    profile=os.environ.get('YUANWAI_HERMES_PROFILE')
    if not profile: raise RuntimeError('AI inference unavailable; set YUANWAI_HERMES_PROFILE or YUANWAI_AI_ENDPOINT')
-   prompt='Return JSON only with exact schema: {facts:[{topic:string,value_class:string}],commitment_request:boolean,conflict:boolean,reference:boolean,supplier_ready:boolean,requires_human_gate:boolean,primary_next_action:string,guardrail:string}. Allowed normalized fact topics: date, location, headcount, service_form, time, budget, menu_preferences, dietary, setup_logistics, invoice_admin. Preserve each distinct fact; never return prose facts or alternate keys. Set requires_human_gate=true ONLY when this current customer message asks for availability/acceptance/quote/exception/payment/fulfillment or explicitly requires supplier authority; ordinary qualification facts must set it false. Frozen rules: date is not availability; feasibility is not acceptance; references are not promises; changed/contradictory facts recover; supplier authority is human-gated. Current case state='+json.dumps(case.public(),ensure_ascii=False)+' Synthetic customer message='+text
+   prompt='Return JSON only with exact schema: {facts:[{topic:string,value:string,value_class:string}],commitment_request:boolean,conflict:boolean,reference:boolean,supplier_ready:boolean,requires_human_gate:boolean,primary_next_action:string,guardrail:string}. Allowed normalized fact topics: date, location, headcount, service_form, time, budget, menu_preferences, dietary, setup_logistics, invoice_admin. Preserve each distinct fact and its actual value; never return prose facts or alternate keys. Set requires_human_gate=true ONLY when this current customer message asks for availability/acceptance/quote/exception/payment/fulfillment or explicitly requires supplier authority; ordinary qualification facts must set it false. Frozen rules: date is not availability; feasibility is not acceptance; references are not promises; changed/contradictory facts recover; supplier authority is human-gated. Current case state='+json.dumps(case.internal(),ensure_ascii=False)+' Synthetic customer message='+text
    r=subprocess.run(['hermes','-p',profile,'-z',prompt],capture_output=True,text=True,timeout=120,check=True)
    out=json.loads(r.stdout)
    return self.normalize(json.loads(r.stdout))
@@ -34,12 +36,12 @@ class AIInference:
   facts=out.get('facts')
   aliases={'event_date':'date','date':'date','location':'location','venue':'location','guest_count':'headcount','headcount':'headcount','service_style':'service_form','service_form':'service_form','time':'time','event_time':'time','budget':'budget','price_range':'budget','menu':'menu_preferences','preferences':'menu_preferences','menu_preferences':'menu_preferences','dietary':'dietary','dietary_needs':'dietary','setup':'setup_logistics','logistics':'setup_logistics','setup_logistics':'setup_logistics','invoice':'invoice_admin','admin':'invoice_admin','invoice_admin':'invoice_admin'}
   if isinstance(facts,dict): facts=[{'topic':k,'value_class':v} for k,v in facts.items() if k not in ('source',)]
-  if not isinstance(facts,list) or any(not isinstance(x,dict) or 'topic' not in x or ('value_class' not in x and 'value' not in x) for x in facts): raise RuntimeError('AI facts schema malformed: expected list of {topic,value_class}')
+  if not isinstance(facts,list) or any(not isinstance(x,dict) or 'topic' not in x or 'value' not in x or 'value_class' not in x for x in facts): raise RuntimeError('AI facts schema malformed: expected list of {topic,value,value_class}')
   stable=[]
   for x in facts:
    topic=aliases.get(str(x['topic']))
    if not topic: raise RuntimeError('AI fact topic unnormalizable: '+str(x['topic']))
-   stable.append({'topic':topic,'value_class':str(x.get('value_class',x.get('value')))})
+   stable.append({'topic':topic,'value_class':str(x['value_class']),'value':str(x['value'])})
   required={'commitment_request','conflict','reference','supplier_ready','requires_human_gate'}
   if not required.issubset(out): raise RuntimeError('AI structured authority fields missing')
   if not all(isinstance(out[k],bool) for k in required): raise RuntimeError('AI authority fields must be boolean')
@@ -58,14 +60,19 @@ class Simulator:
   if self.path: self.path.parent.mkdir(parents=True,exist_ok=True); self.path.write_text(json.dumps({'case':self.case.public(),'events':self.case.events},ensure_ascii=False,indent=2),encoding='utf-8')
  def brief(self): return {'fact_topics':[f.topic for f in self.case.facts if f.status=='CURRENT'],'certainty_classes':[f.certainty for f in self.case.facts if f.status=='CURRENT'],'feasibility':self.case.feasibility,'unknowns':'No universal required fields; provisional policy remains open'}
  def turn(self,text):
-  p=self.ai.interpret(text,self.case); ev={'ts':now(),'type':'customer_turn','text_redacted':True,'text_hash':h(text),'topics':[],'inference':p}
+  p=self.ai.interpret(text,self.case); changed=False; ev={'ts':now(),'type':'customer_turn','text_redacted':True,'text_hash':h(text),'topics':[],'inference':p}
   for x in p.get('facts',[]):
-   old=[f for f in self.case.facts if f.topic==x['topic'] and f.status=='CURRENT']; new_value=x.get('value_class',x.get('value','unknown'))
-   if old and old[-1].value_class!=new_value:
+   old=[f for f in self.case.facts if f.topic==x['topic'] and f.status=='CURRENT']; new_value=x.get('value',x.get('value_class','unknown'))
+   if old and (old[-1].value or old[-1].value_class)!=new_value:
+    changed=True
     for f in old: f.status='SUPERSEDED'
     self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; self.case.gate=None; self.case.next_action='recovery'; ev['invalidation']={'dependent_state':['feasibility','supplier_ready_brief','pending_supplier_decision'],'superseded_fact_ids':[f.event_id for f in old]}
-   self.case.facts.append(Fact(x['topic'],x.get('value_class',x.get('value','unknown')),h(text),'CONFIRMED_BY_CUSTOMER',event_id=uuid.uuid4().hex[:8])); ev['topics'].append(x['topic'])
-  if p.get('conflict') and p.get('facts'): self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有衝突或變更，先不沿用舊結論，請確認目前有效內容。'
+   if not old or (old[-1].value or old[-1].value_class) != new_value:
+    self.case.facts.append(Fact(x['topic'],x['value_class'],h(text),'CONFIRMED_BY_CUSTOMER',event_id=uuid.uuid4().hex[:8],value=new_value))
+   ev['topics'].append(x['topic'])
+  if changed:
+   self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有變更，已作廢受影響的舊結論與 supplier gate，請重新確認。'
+  elif p.get('conflict') and p.get('facts'): self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有衝突或變更，先不沿用舊結論，請確認目前有效內容。'
   elif p.get('commitment_request') or p.get('model_requires_human_gate'): self.case.lifecycle='HUMAN_GATE_PENDING'; self.case.next_action='human_gate'; self.case.gate={'reason':'supplier authority required','decision_type':'availability/acceptance/price/fulfillment','brief':self.brief(),'authorized':False}; response='這需要供應方確認，我不能自行承諾；已整理 supplier-ready brief。'
   elif p.get('reference'): self.case.lifecycle='OPTIONS'; self.case.next_action='reference'; response='可提供標示為歷史參考的範例，不代表本次菜單、價格或可用性。'
   elif p.get('supplier_ready'): self.case.lifecycle='SUPPLIER_READY'; self.case.next_action='human_gate'; self.case.gate={'reason':'AI assessed decision readiness','decision_type':'supplier authority decision','brief':self.brief(),'authorized':False}; response='已達可供供應方判斷的程度，尚不代表接單。'
@@ -91,7 +98,7 @@ def scenarios():
  run('feasible is not acceptance',lambda:(lambda s:(s.turn('請評估是否可行'),s.case.feasibility=='NOT_ASSESSED' and s.case.lifecycle!='CUSTOMER_CONTINUATION' and s.case.next_action!='answer'))(base())[1])
  run('internal reason stays internal',lambda:(lambda s:(s.turn('請確認接單'),s.decide('reject','目前無法承接，internal low value reason'),s.case.gate['customer_response_hash'] and all('internal low value' not in json.dumps(e,ensure_ascii=False) for e in s.case.events)))(base())[-1])
  run('change invalidates downstream',lambda:(lambda s:(s.turn('請確認接單'),s.turn('改成 10/21'),s.case.gate is None and s.case.next_action=='recovery' and any(f.status=='SUPERSEDED' for f in s.case.facts) and s.case.feasibility=='UNKNOWN'))(base())[-1])
- run('contradictory facts fail closed',lambda:(lambda s:(s.turn('不是 10/20 改成 10/22'),s.case.next_action=='recovery' and s.case.gate is None and len([f for f in s.case.facts if f.topic=='date'])==2))(base())[1])
+ run('contradictory facts fail closed',lambda:(lambda s:(s.turn('改成 10/22'),s.case.next_action=='recovery' and s.case.gate is None and len([f for f in s.case.facts if f.topic=='date'])==2))(base())[1])
  run('reference is not promise',lambda:(lambda s:(s.turn('給我之前的菜單照片'),s.case.next_action=='reference' and s.case.feasibility=='NOT_ASSESSED' and not s.case.gate))(base())[1])
  run('mediation continues',lambda:(lambda s:(s.turn('請確認接單'),s.decide('accept','供應方確認可承接'),s.case.lifecycle=='CUSTOMER_CONTINUATION' and s.case.next_action=='answer' and s.case.gate['authorized'] is True))(base())[-1])
  Path('simulation-evidence.json').write_text(json.dumps({'generated_at':now(),'scenarios':out,'pass':sum(x['status']=='PASS' for x in out),'total':len(out)},ensure_ascii=False,indent=2),encoding='utf-8'); return out

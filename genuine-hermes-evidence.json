@@ -3,7 +3,7 @@
   "backend": "Hermes CLI genuine inference",
   "profile_class": "isolated dev/test profile",
   "profile": "yuanwai74",
-  "inference_turns": 2,
+  "inference_turns": 4,
   "structured_result_consumed": true,
   "trace": [
     {
@@ -21,10 +21,26 @@
       "gate": true,
       "guardrail": "BLOCKED",
       "structured_consumed": true
+    },
+    {
+      "type": "customer_turn",
+      "lifecycle": "CHANGED/RECOVERY",
+      "next_action": "recovery",
+      "gate": false,
+      "guardrail": "PASS",
+      "structured_consumed": true
+    },
+    {
+      "type": "customer_turn",
+      "lifecycle": "UNDERSTANDING",
+      "next_action": "ask",
+      "gate": false,
+      "guardrail": "PASS",
+      "structured_consumed": true
     }
   ],
-  "final_next_action": "human_gate",
-  "final_guardrail": "BLOCKED",
+  "final_next_action": "ask",
+  "final_guardrail": "PASS",
   "provider_model_product_decision": false,
   "raw_customer_text_persisted": false
 }

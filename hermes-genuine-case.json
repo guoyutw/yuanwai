@@ -1,98 +1,70 @@
 {
   "case": {
-    "case_id": "case-0bb9e04d",
-    "lifecycle": "HUMAN_GATE_PENDING",
+    "case_id": "case-1d70b155",
+    "lifecycle": "UNDERSTANDING",
     "facts": [
       {
-        "topic": "date",
-        "value_class": "explicit",
-        "wording_hash": "724566b06e28097f",
-        "certainty": "CONFIRMED_BY_CUSTOMER",
-        "status": "CURRENT",
-        "event_id": "1c77aab9"
-      },
-      {
         "topic": "location",
-        "value_class": "explicit",
+        "value_class": "customer_stated",
         "wording_hash": "724566b06e28097f",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "5a7c4b18"
+        "event_id": "d4b6f756",
+        "value": "中壢"
       },
       {
         "topic": "headcount",
-        "value_class": "explicit",
+        "value_class": "customer_stated",
         "wording_hash": "724566b06e28097f",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "396529cb"
+        "event_id": "7aed30e2",
+        "value": "約30人"
       },
       {
         "topic": "service_form",
-        "value_class": "explicit",
+        "value_class": "customer_stated",
         "wording_hash": "724566b06e28097f",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "10d0caf4"
+        "event_id": "0e483f89",
+        "value": "歐式自助餐"
       },
       {
         "topic": "time",
-        "value_class": "explicit",
+        "value_class": "customer_stated",
         "wording_hash": "724566b06e28097f",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "104778b0"
+        "event_id": "390ba1cb",
+        "value": "晚上六點"
       },
       {
         "topic": "budget",
-        "value_class": "explicit",
+        "value_class": "customer_stated",
         "wording_hash": "724566b06e28097f",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "53190c16"
+        "event_id": "f3533f01",
+        "value": "兩萬"
       },
       {
         "topic": "date",
-        "value_class": "explicit",
-        "wording_hash": "07bbe9d1269fa8b6",
+        "value_class": "CONFIRMED_BY_CUSTOMER",
+        "wording_hash": "489a91f208f8cec3",
         "certainty": "CONFIRMED_BY_CUSTOMER",
         "status": "CURRENT",
-        "event_id": "5fe33fc2"
+        "event_id": "ae359dee",
+        "value": "10/21"
       }
     ],
-    "feasibility": "NOT_ASSESSED",
-    "next_action": "human_gate",
-    "gate": {
-      "reason": "supplier authority required",
-      "decision_type": "availability/acceptance/price/fulfillment",
-      "brief": {
-        "fact_topics": [
-          "date",
-          "location",
-          "headcount",
-          "service_form",
-          "time",
-          "budget",
-          "date"
-        ],
-        "certainty_classes": [
-          "CONFIRMED_BY_CUSTOMER",
-          "CONFIRMED_BY_CUSTOMER",
-          "CONFIRMED_BY_CUSTOMER",
-          "CONFIRMED_BY_CUSTOMER",
-          "CONFIRMED_BY_CUSTOMER",
-          "CONFIRMED_BY_CUSTOMER",
-          "CONFIRMED_BY_CUSTOMER"
-        ],
-        "feasibility": "NOT_ASSESSED",
-        "unknowns": "No universal required fields; provisional policy remains open"
-      },
-      "authorized": false
-    }
+    "feasibility": "UNKNOWN",
+    "next_action": "ask",
+    "gate": null
   },
   "events": [
     {
-      "ts": "2026-10-02T14:34:44.307153+00:00",
+      "ts": "2026-10-02T14:54:11.031415+00:00",
       "type": "customer_turn",
       "text_redacted": true,
       "text_hash": "724566b06e28097f",
@@ -108,88 +80,100 @@
         "facts": [
           {
             "topic": "date",
-            "value_class": "explicit"
+            "value_class": "customer_stated",
+            "value": "10/20"
           },
           {
             "topic": "location",
-            "value_class": "explicit"
+            "value_class": "customer_stated",
+            "value": "中壢"
           },
           {
             "topic": "headcount",
-            "value_class": "explicit"
+            "value_class": "customer_stated",
+            "value": "約30人"
           },
           {
             "topic": "service_form",
-            "value_class": "explicit"
+            "value_class": "customer_stated",
+            "value": "歐式自助餐"
           },
           {
             "topic": "time",
-            "value_class": "explicit"
+            "value_class": "customer_stated",
+            "value": "晚上六點"
           },
           {
             "topic": "budget",
-            "value_class": "explicit"
+            "value_class": "customer_stated",
+            "value": "兩萬"
           }
         ],
         "commitment_request": false,
         "conflict": false,
         "reference": false,
         "supplier_ready": false,
-        "primary_next_action": "詢問飲食需求與場地 setup logistics",
+        "primary_next_action": "確認活動年份及完整需求細節",
         "model_requires_human_gate": false,
-        "guardrail": "僅記錄需求，不承諾檔期可用、接單、報價或例外處理"
+        "guardrail": "以上僅為需求紀錄，不代表檔期可用、可承接、報價或供應商接受"
       },
       "state": {
-        "case_id": "case-0bb9e04d",
+        "case_id": "case-1d70b155",
         "lifecycle": "UNDERSTANDING",
         "facts": [
           {
             "topic": "date",
-            "value_class": "explicit",
+            "value_class": "customer_stated",
             "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "1c77aab9"
+            "event_id": "ab56b132",
+            "value": "10/20"
           },
           {
             "topic": "location",
-            "value_class": "explicit",
+            "value_class": "customer_stated",
             "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "5a7c4b18"
+            "event_id": "d4b6f756",
+            "value": "中壢"
           },
           {
             "topic": "headcount",
-            "value_class": "explicit",
+            "value_class": "customer_stated",
             "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "396529cb"
+            "event_id": "7aed30e2",
+            "value": "約30人"
           },
           {
             "topic": "service_form",
-            "value_class": "explicit",
+            "value_class": "customer_stated",
             "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "10d0caf4"
+            "event_id": "0e483f89",
+            "value": "歐式自助餐"
           },
           {
             "topic": "time",
-            "value_class": "explicit",
+            "value_class": "customer_stated",
             "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "104778b0"
+            "event_id": "390ba1cb",
+            "value": "晚上六點"
           },
           {
             "topic": "budget",
-            "value_class": "explicit",
+            "value_class": "customer_stated",
             "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "53190c16"
+            "event_id": "f3533f01",
+            "value": "兩萬"
           }
         ],
         "feasibility": "NOT_ASSESSED",
@@ -200,7 +184,7 @@
       "response_class": "safe_template"
     },
     {
-      "ts": "2026-10-02T14:34:58.395361+00:00",
+      "ts": "2026-10-02T14:54:24.966790+00:00",
       "type": "customer_turn",
       "text_redacted": true,
       "text_hash": "07bbe9d1269fa8b6",
@@ -211,76 +195,75 @@
         "facts": [
           {
             "topic": "date",
-            "value_class": "explicit"
+            "value_class": "confirmed_by_customer",
+            "value": "10/20"
           }
         ],
         "commitment_request": true,
         "conflict": false,
         "reference": false,
         "supplier_ready": false,
-        "primary_next_action": "human_review_availability_for_date",
+        "primary_next_action": "確認供應商是否能承作10/20的活動",
         "model_requires_human_gate": true,
-        "guardrail": "Do not imply availability, acceptance, or commitment before supplier approval."
+        "guardrail": "不得將日期或可行性視為已接受；需經供應商確認後才能回覆承作與否"
       },
       "state": {
-        "case_id": "case-0bb9e04d",
+        "case_id": "case-1d70b155",
         "lifecycle": "HUMAN_GATE_PENDING",
         "facts": [
           {
             "topic": "date",
-            "value_class": "explicit",
+            "value_class": "customer_stated",
             "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "1c77aab9"
+            "event_id": "ab56b132",
+            "value": "10/20"
           },
           {
             "topic": "location",
-            "value_class": "explicit",
+            "value_class": "customer_stated",
             "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "5a7c4b18"
+            "event_id": "d4b6f756",
+            "value": "中壢"
           },
           {
             "topic": "headcount",
-            "value_class": "explicit",
+            "value_class": "customer_stated",
             "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "396529cb"
+            "event_id": "7aed30e2",
+            "value": "約30人"
           },
           {
             "topic": "service_form",
-            "value_class": "explicit",
+            "value_class": "customer_stated",
             "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "10d0caf4"
+            "event_id": "0e483f89",
+            "value": "歐式自助餐"
           },
           {
             "topic": "time",
-            "value_class": "explicit",
+            "value_class": "customer_stated",
             "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "104778b0"
+            "event_id": "390ba1cb",
+            "value": "晚上六點"
           },
           {
             "topic": "budget",
-            "value_class": "explicit",
+            "value_class": "customer_stated",
             "wording_hash": "724566b06e28097f",
             "certainty": "CONFIRMED_BY_CUSTOMER",
             "status": "CURRENT",
-            "event_id": "53190c16"
-          },
-          {
-            "topic": "date",
-            "value_class": "explicit",
-            "wording_hash": "07bbe9d1269fa8b6",
-            "certainty": "CONFIRMED_BY_CUSTOMER",
-            "status": "CURRENT",
-            "event_id": "5fe33fc2"
+            "event_id": "f3533f01",
+            "value": "兩萬"
           }
         ],
         "feasibility": "NOT_ASSESSED",
@@ -295,11 +278,9 @@
               "headcount",
               "service_form",
               "time",
-              "budget",
-              "date"
+              "budget"
             ],
             "certainty_classes": [
-              "CONFIRMED_BY_CUSTOMER",
               "CONFIRMED_BY_CUSTOMER",
               "CONFIRMED_BY_CUSTOMER",
               "CONFIRMED_BY_CUSTOMER",
@@ -314,6 +295,226 @@
         }
       },
       "guardrail": "BLOCKED",
+      "response_class": "safe_template"
+    },
+    {
+      "ts": "2026-10-02T14:54:47.668461+00:00",
+      "type": "customer_turn",
+      "text_redacted": true,
+      "text_hash": "489a91f208f8cec3",
+      "topics": [
+        "date",
+        "location",
+        "headcount",
+        "service_form",
+        "time",
+        "budget"
+      ],
+      "inference": {
+        "facts": [
+          {
+            "topic": "date",
+            "value_class": "CONFIRMED_BY_CUSTOMER",
+            "value": "10/21"
+          },
+          {
+            "topic": "location",
+            "value_class": "CONFIRMED_BY_CUSTOMER",
+            "value": "中壢"
+          },
+          {
+            "topic": "headcount",
+            "value_class": "CONFIRMED_BY_CUSTOMER",
+            "value": "約30人"
+          },
+          {
+            "topic": "service_form",
+            "value_class": "CONFIRMED_BY_CUSTOMER",
+            "value": "歐式自助餐"
+          },
+          {
+            "topic": "time",
+            "value_class": "CONFIRMED_BY_CUSTOMER",
+            "value": "晚上六點"
+          },
+          {
+            "topic": "budget",
+            "value_class": "CONFIRMED_BY_CUSTOMER",
+            "value": "兩萬"
+          }
+        ],
+        "commitment_request": false,
+        "conflict": true,
+        "reference": false,
+        "supplier_ready": false,
+        "primary_next_action": "更新日期為10/21並保留待人工確認狀態",
+        "model_requires_human_gate": false,
+        "guardrail": "日期變更不代表可接單、接受、報價或履約承諾"
+      },
+      "invalidation": {
+        "dependent_state": [
+          "feasibility",
+          "supplier_ready_brief",
+          "pending_supplier_decision"
+        ],
+        "superseded_fact_ids": [
+          "ab56b132"
+        ]
+      },
+      "state": {
+        "case_id": "case-1d70b155",
+        "lifecycle": "CHANGED/RECOVERY",
+        "facts": [
+          {
+            "topic": "location",
+            "value_class": "customer_stated",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "d4b6f756",
+            "value": "中壢"
+          },
+          {
+            "topic": "headcount",
+            "value_class": "customer_stated",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "7aed30e2",
+            "value": "約30人"
+          },
+          {
+            "topic": "service_form",
+            "value_class": "customer_stated",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "0e483f89",
+            "value": "歐式自助餐"
+          },
+          {
+            "topic": "time",
+            "value_class": "customer_stated",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "390ba1cb",
+            "value": "晚上六點"
+          },
+          {
+            "topic": "budget",
+            "value_class": "customer_stated",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "f3533f01",
+            "value": "兩萬"
+          },
+          {
+            "topic": "date",
+            "value_class": "CONFIRMED_BY_CUSTOMER",
+            "wording_hash": "489a91f208f8cec3",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "ae359dee",
+            "value": "10/21"
+          }
+        ],
+        "feasibility": "UNKNOWN",
+        "next_action": "recovery",
+        "gate": null
+      },
+      "guardrail": "PASS",
+      "response_class": "safe_template"
+    },
+    {
+      "ts": "2026-10-02T14:55:03.450719+00:00",
+      "type": "customer_turn",
+      "text_redacted": true,
+      "text_hash": "4eacdf455b6af9ed",
+      "topics": [
+        "date"
+      ],
+      "inference": {
+        "facts": [
+          {
+            "topic": "date",
+            "value_class": "confirmed",
+            "value": "10/21"
+          }
+        ],
+        "commitment_request": false,
+        "conflict": false,
+        "reference": false,
+        "supplier_ready": false,
+        "primary_next_action": "收集尚未提供的需求資訊並進行可行性評估",
+        "model_requires_human_gate": false,
+        "guardrail": "日期不是可用性或接受承諾"
+      },
+      "state": {
+        "case_id": "case-1d70b155",
+        "lifecycle": "UNDERSTANDING",
+        "facts": [
+          {
+            "topic": "location",
+            "value_class": "customer_stated",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "d4b6f756",
+            "value": "中壢"
+          },
+          {
+            "topic": "headcount",
+            "value_class": "customer_stated",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "7aed30e2",
+            "value": "約30人"
+          },
+          {
+            "topic": "service_form",
+            "value_class": "customer_stated",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "0e483f89",
+            "value": "歐式自助餐"
+          },
+          {
+            "topic": "time",
+            "value_class": "customer_stated",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "390ba1cb",
+            "value": "晚上六點"
+          },
+          {
+            "topic": "budget",
+            "value_class": "customer_stated",
+            "wording_hash": "724566b06e28097f",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "f3533f01",
+            "value": "兩萬"
+          },
+          {
+            "topic": "date",
+            "value_class": "CONFIRMED_BY_CUSTOMER",
+            "wording_hash": "489a91f208f8cec3",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "ae359dee",
+            "value": "10/21"
+          }
+        ],
+        "feasibility": "UNKNOWN",
+        "next_action": "ask",
+        "gate": null
+      },
+      "guardrail": "PASS",
       "response_class": "safe_template"
     }
   ]
