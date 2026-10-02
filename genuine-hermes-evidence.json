@@ -39,6 +39,53 @@
       "structured_consumed": true
     }
   ],
+  "gate_brief_public": {
+    "reason": "supplier authority required",
+    "decision_type": "availability/acceptance/price/fulfillment",
+    "brief": {
+      "facts": [
+        {
+          "topic": "date",
+          "value_hash": "bbd7a63d6f5153ed",
+          "certainty": "STATED",
+          "provenance_hash": "6ea68f9eea2b9e85"
+        },
+        {
+          "topic": "location",
+          "value_hash": "cf11592ff2e011f7",
+          "certainty": "STATED",
+          "provenance_hash": "cb38d4695c2c3e3b"
+        },
+        {
+          "topic": "headcount",
+          "value_hash": "e50729fdad762388",
+          "certainty": "STATED",
+          "provenance_hash": "95b48ca8394ab190"
+        },
+        {
+          "topic": "service_form",
+          "value_hash": "2b03b0edb2d6911e",
+          "certainty": "STATED",
+          "provenance_hash": "a9c5f3904f03f074"
+        },
+        {
+          "topic": "time",
+          "value_hash": "3117d87135e933cd",
+          "certainty": "STATED",
+          "provenance_hash": "c2bd53e352cad729"
+        },
+        {
+          "topic": "budget",
+          "value_hash": "ebd79b08fed9967f",
+          "certainty": "STATED",
+          "provenance_hash": "052dd5d6939d416c"
+        }
+      ],
+      "feasibility": "NOT_ASSESSED",
+      "unknowns": "No universal required fields; provisional policy remains open"
+    },
+    "authorized": false
+  },
   "final_next_action": "ask",
   "final_guardrail": "PASS",
   "provider_model_product_decision": false,

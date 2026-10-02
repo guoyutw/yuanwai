@@ -7,12 +7,17 @@ def now(): return datetime.now(timezone.utc).isoformat()
 def h(s): return hashlib.sha256(s.encode()).hexdigest()[:16]
 @dataclass
 class Fact:
- topic:str; value_class:str; wording_hash:str; certainty:str='STATED'; status:str='CURRENT'; event_id:str=''; value:str=''
+ topic:str; value_class:str; wording_hash:str; certainty:str='STATED'; status:str='CURRENT'; event_id:str=''; value:str=''; provenance_hash:str=''
 @dataclass
 class Case:
  case_id:str=field(default_factory=lambda:'case-'+uuid.uuid4().hex[:8]); lifecycle:str='INTAKE'; facts:list[Fact]=field(default_factory=list); feasibility:str='NOT_ASSESSED'; next_action:str='ask'; gate:dict|None=None; events:list[dict]=field(default_factory=list)
  def public(self):
-  g=None if not self.gate else {k:v for k,v in self.gate.items() if k not in ('customer_response','internal_reason')}
+  if self.gate:
+   g={k:v for k,v in self.gate.items() if k not in ('customer_response','internal_reason')}
+   if isinstance(g.get('brief'),dict):
+    b=dict(g['brief']); b['facts']=[{'topic':f['topic'],'value_hash':h(str(f['value'])),'certainty':f['certainty'],'provenance_hash':f['provenance_hash']} for f in b.get('facts',[])]
+    g['brief']=b
+  else: g=None
   return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[asdict(x) for x in self.facts if x.status=='CURRENT'],'feasibility':self.feasibility,'next_action':self.next_action,'gate':g}
  def internal(self):
   return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[{'topic':f.topic,'value':f.value or f.value_class,'certainty':f.certainty,'status':f.status} for f in self.facts if f.status=='CURRENT'],'feasibility':self.feasibility,'next_action':self.next_action}
@@ -58,7 +63,7 @@ class Simulator:
  def save(self,ev):
   self.case.events.append(ev)
   if self.path: self.path.parent.mkdir(parents=True,exist_ok=True); self.path.write_text(json.dumps({'case':self.case.public(),'events':self.case.events},ensure_ascii=False,indent=2),encoding='utf-8')
- def brief(self): return {'fact_topics':[f.topic for f in self.case.facts if f.status=='CURRENT'],'certainty_classes':[f.certainty for f in self.case.facts if f.status=='CURRENT'],'feasibility':self.case.feasibility,'unknowns':'No universal required fields; provisional policy remains open'}
+ def brief(self): return {'facts':[{'topic':f.topic,'value':f.value or f.value_class,'certainty':f.certainty,'provenance_hash':f.provenance_hash} for f in self.case.facts if f.status=='CURRENT'],'feasibility':self.case.feasibility,'unknowns':'No universal required fields; provisional policy remains open'}
  def turn(self,text):
   p=self.ai.interpret(text,self.case); changed=False; ev={'ts':now(),'type':'customer_turn','text_redacted':True,'text_hash':h(text),'topics':[],'inference':p}
   for x in p.get('facts',[]):
@@ -68,7 +73,8 @@ class Simulator:
     for f in old: f.status='SUPERSEDED'
     self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; self.case.gate=None; self.case.next_action='recovery'; ev['invalidation']={'dependent_state':['feasibility','supplier_ready_brief','pending_supplier_decision'],'superseded_fact_ids':[f.event_id for f in old]}
    if not old or (old[-1].value or old[-1].value_class) != new_value:
-    self.case.facts.append(Fact(x['topic'],x['value_class'],h(text),'CONFIRMED_BY_CUSTOMER',event_id=uuid.uuid4().hex[:8],value=new_value))
+    certainty={'customer_stated':'STATED','stated':'STATED','customer_confirmed':'CONFIRMED_BY_CUSTOMER','confirmed':'CONFIRMED_BY_CUSTOMER','inferred':'INFERRED','reference_only':'REFERENCE_ONLY','unknown':'UNKNOWN'}.get(str(x['value_class']).lower(),'STATED')
+    self.case.facts.append(Fact(x['topic'],x['value_class'],h(text),certainty,event_id=uuid.uuid4().hex[:8],value=new_value,provenance_hash=h(text+'|'+x['topic'])))
    ev['topics'].append(x['topic'])
   if changed:
    self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有變更，已作廢受影響的舊結論與 supplier gate，請重新確認。'

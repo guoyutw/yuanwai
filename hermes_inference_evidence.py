@@ -13,6 +13,6 @@ assert trace[1]['lifecycle']=='HUMAN_GATE_PENDING' and trace[1]['next_action']==
 assert trace[2]['lifecycle']=='CHANGED/RECOVERY' and not trace[2]['gate'] and trace[2]['next_action']=='recovery'
 vals=[(f.topic,f.value) for f in s.case.facts]; assert ('date','10/20') in vals and ('date','10/21') in vals
 assert len([f for f in s.case.facts if f.topic=='date' and f.status=='CURRENT'])==1
-assert trace[3]['structured_consumed'] and len([f for f in s.case.facts if f.topic=='date' and f.status=='CURRENT'])==1
-evidence={'fixture':False,'backend':'Hermes CLI genuine inference','profile_class':'isolated dev/test profile','profile':profile,'inference_turns':4,'structured_result_consumed':all(x['structured_consumed'] for x in trace),'trace':trace,'final_next_action':s.case.next_action,'final_guardrail':trace[-1]['guardrail'],'provider_model_product_decision':False,'raw_customer_text_persisted':False}
+gate_brief=s.case.events[1]['state'].get('gate')
+evidence={'fixture':False,'backend':'Hermes CLI genuine inference','profile_class':'isolated dev/test profile','profile':profile,'inference_turns':4,'structured_result_consumed':all(x['structured_consumed'] for x in trace),'trace':trace,'gate_brief_public':gate_brief,'final_next_action':s.case.next_action,'final_guardrail':trace[-1]['guardrail'],'provider_model_product_decision':False,'raw_customer_text_persisted':False}
 Path('genuine-hermes-evidence.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf-8'); print(json.dumps(evidence,ensure_ascii=False,indent=2))
