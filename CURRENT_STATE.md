@@ -28,24 +28,12 @@ This remains a candidate direction under experiment, not a canonical final busin
 
 ## NEXT ACTION
 
-Design and freeze **Yuanwai State / AI Operating Contract 0.1** before implementing the AI qualification behavior.
+Create the smallest implementation/simulation issue from the frozen contract, without adding model, database, framework, hosting, marketplace, vendor SaaS, or autonomous quoting scope. Stable ingress remains an implementation prerequisite before real cases.
 
-The contract should use the completed discovery evidence to define, at minimum:
+- [State / AI Operating Contract 0.1](records/contract-state-ai-operating-0.1.md) — frozen owner contract for lifecycle, provenance, gating, supplier-ready, recovery, mediation, and public-safe logging.
 
-- conversation lifecycle/state and provenance for customer-provided information;
-- how Routing / Gating, Conditional Qualification, Post-Quote / Fulfillment, and Supplier Decision information is represented;
-- the rule for preserving known information and choosing only the next necessary question;
-- the condition for producing a supplier-ready brief;
-- the hidden-human gate for supplier commitments such as availability, price, menu/service exceptions, payment terms, and fulfillment commitments;
-- fallback/recovery behavior when information is ambiguous, contradictory, changed, or unsupported;
-- the public-safe experiment log needed to review the first five real cases.
-
-Do not choose a model, database, framework, marketplace design, or autonomous quoting behavior merely to fill gaps in this contract.
-
-After the contract is frozen, implement the smallest AI-first qualification loop on top of the already-proven LINE transport, establish stable ingress, and run it on real Blossom-originated inquiries.
+The downstream experiment still requires at least 5 real new inquiries with reviewable public-safe records before deciding KEEP, REVISE, or DROP the qualification candidate.
 
 ## CLEAR CONDITION
 
-`Yuanwai State / AI Operating Contract 0.1` is frozen with testable state, authority, gating, supplier-ready, recovery, and logging rules that are sufficient for implementation **without guessing domain field roles** and without converting conditional historical patterns into universal requirements.
-
-At that point, update CURRENT STATE to the implementation/live-test phase. The downstream experiment still requires at least 5 real new inquiries with reviewable public-safe records before deciding KEEP, REVISE, or DROP the qualification candidate.
+The contract is frozen and traceable to current authority and owner decisions. Its state, authority, gating, supplier-ready, recovery, mediation, acceptance scenarios, and explicit PROVISIONAL unknowns are sufficient to write the next bounded implementation/simulation issue without guessing domain field roles or converting conditional historical patterns into universal requirements.
