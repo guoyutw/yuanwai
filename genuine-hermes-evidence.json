@@ -3,8 +3,8 @@
   "backend": "Hermes CLI genuine inference",
   "profile_class": "isolated dev/test profile",
   "profile": "yuanwai74",
-  "inference_turns": 4,
-  "structured_result_consumed": true,
+  "inference_turns": 5,
+  "structured_result_consumed": false,
   "trace": [
     {
       "type": "customer_turn",
@@ -32,16 +32,33 @@
     },
     {
       "type": "customer_turn",
-      "lifecycle": "SUPPLIER_READY",
+      "lifecycle": "UNDERSTANDING",
+      "next_action": "ask",
+      "gate": false,
+      "guardrail": "PASS",
+      "structured_consumed": true
+    },
+    {
+      "type": "customer_turn",
+      "lifecycle": "HUMAN_GATE_PENDING",
       "next_action": "human_gate",
       "gate": true,
       "guardrail": "BLOCKED",
       "structured_consumed": true
+    },
+    {
+      "type": "supplier_decision",
+      "lifecycle": "CUSTOMER_CONTINUATION",
+      "next_action": "answer",
+      "gate": true,
+      "guardrail": null,
+      "structured_consumed": false
     }
   ],
   "gate_brief_public": {
     "reason": "supplier authority required",
-    "decision_type": "availability/acceptance/price/fulfillment",
+    "decision_type": "availability/acceptance",
+    "decision_request": "請供應方確認本案是否可承作（availability/acceptance），不得由 AI 自行承諾。",
     "brief": {
       "facts": [
         {
@@ -82,12 +99,19 @@
         }
       ],
       "feasibility": "NOT_ASSESSED",
-      "unknowns": "No universal required fields; provisional policy remains open"
+      "unknowns": [],
+      "conflicts": []
     },
     "authorized": false
   },
-  "final_next_action": "human_gate",
-  "final_guardrail": "BLOCKED",
+  "decision_continuation": {
+    "decision_class": "accept",
+    "internal_reason_redacted": true,
+    "authorized_response_hash": "5cebed49f827d43e",
+    "lifecycle": "CUSTOMER_CONTINUATION",
+    "outward_response_redacted": true
+  },
+  "final_next_action": "answer",
   "provider_model_product_decision": false,
   "raw_customer_text_persisted": false
 }

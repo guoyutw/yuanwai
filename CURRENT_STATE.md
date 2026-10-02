@@ -26,9 +26,13 @@ This remains a candidate direction under experiment, not a canonical final busin
 - [Historical State Delta review](records/evidence-state-delta-yuanwai-review-2026-10-01.md) — public-safe synthesis of Yuanwai-relevant owner evidence that had not all been reflected in the repository.
 - [Two-sided catering friction review](records/evidence-two-sided-catering-friction-review-2026-10-01.md) — supporting evidence on customer/vendor friction; does not change the experiment boundary.
 
-## NEXT ACTION
+# Issue #74 exact candidate; remains open pending independent review.
 
-Issue #74 offline simulator candidate is published on `main` at `43fe215c4704535d5e4613f4b3348f98f9d1361f` and remains OPEN pending FINAL SPEC REVIEW. Do not create LINE integration work until review PASS. The next action is to resolve the remaining review blockers, including a genuine configured model inference run; no model/provider is promoted to product authority.
+- Candidate: `cdcd3b98f8359c0904c8647c5e18bcc32d7a90e3`
+- Issue #74: OPEN — waiting for independent `/review 74`
+- B9/B10: human gate decision request, actual unknowns/conflicts, separated supplier decision fields, fail-closed missing outward response, and customer continuation implemented and verified.
+- B11: this candidate supersedes the prior stale pointer.
+- Next action: independent final review. No LINE integration until review PASS.
 
 - [State / AI Operating Contract 0.1](records/contract-state-ai-operating-0.1.md) — frozen owner contract for lifecycle, provenance, gating, supplier-ready, recovery, mediation, and public-safe logging.
 
