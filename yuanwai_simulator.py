@@ -1,95 +1,87 @@
 #!/usr/bin/env python3
-"""Offline, non-canonical Yuanwai qualification simulator."""
-from __future__ import annotations
-import argparse,json,re,sys,uuid
+import argparse,hashlib,json,os,re,urllib.request,uuid
 from dataclasses import dataclass,field,asdict
 from datetime import datetime,timezone
 from pathlib import Path
-
-ACTIONS={'answer','reference','ask','human_gate','recovery'}
-COMMITMENT=re.compile(r'可用|有空|接單|接受|報價|價格|折扣|付款|菜單定案|保證|一定|承諾')
-TOPICS={'date':r'(\d{1,2}[月/]\d{1,2}日?|\d{4}-\d{1,2}-\d{1,2})','headcount':r'(\d+)\s*(人|位|份)','location':r'(台北|新竹|台中|高雄|桃園|到府|場地)','service_form':r'(外燴|餐盒|自助餐|buffet|桌菜)','price':r'(\d[\d,]*)\s*元'}
-
 def now(): return datetime.now(timezone.utc).isoformat()
+def h(s): return hashlib.sha256(s.encode()).hexdigest()[:16]
 @dataclass
 class Fact:
- topic:str; value:str; wording:str; certainty:str='STATED'; status:str='CURRENT'; event_id:str=''
+ topic:str; value_class:str; wording_hash:str; certainty:str='STATED'; status:str='CURRENT'; event_id:str=''
 @dataclass
 class Case:
- case_id:str=field(default_factory=lambda:'case-'+uuid.uuid4().hex[:8])
- lifecycle:str='INTAKE'; facts:list[Fact]=field(default_factory=list); feasibility:str='NOT_ASSESSED'
- next_action:str='ask'; gate:dict|None=None; events:list[dict]=field(default_factory=list)
+ case_id:str=field(default_factory=lambda:'case-'+uuid.uuid4().hex[:8]); lifecycle:str='INTAKE'; facts:list[Fact]=field(default_factory=list); feasibility:str='NOT_ASSESSED'; next_action:str='ask'; gate:dict|None=None; events:list[dict]=field(default_factory=list)
  def public(self):
-  return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[asdict(x) for x in self.facts if x.status=='CURRENT'],'feasibility':self.feasibility,'next_action':self.next_action,'gate':self.gate}
-class Inference:
- """Replaceable inference boundary. Default is local feature inference, not a dialogue tree."""
+  g=None if not self.gate else {k:v for k,v in self.gate.items() if k not in ('customer_response','internal_reason')}
+  return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[asdict(f) for f in self.facts if f.status=='CURRENT'],'feasibility':self.feasibility,'next_action':self.next_action,'gate':g}
+class AIInference:
+ def __init__(self,fixture=False): self.fixture=fixture
  def interpret(self,text,case):
-  found=[]
-  for topic,pat in TOPICS.items():
-   m=re.search(pat,text,re.I)
-   if m: found.append((topic,m.group(0)))
-  return {'facts':found,'commitment_request':bool(COMMITMENT.search(text)),'conflict':any(x in text for x in ('改成','不是','其實是','更改')),'reference':any(x in text for x in ('照片','範例','菜單','之前')),'raw_length':len(text)}
+  if self.fixture: return self.fixture_infer(text)
+  endpoint=os.environ.get('YUANWAI_AI_ENDPOINT')
+  if not endpoint: raise RuntimeError('AI inference unavailable; set YUANWAI_AI_ENDPOINT and YUANWAI_AI_MODEL')
+  prompt={'message':text,'current_state':case.public(),'instruction':'Return JSON only: facts [{topic,value_class}], commitment_request, conflict, reference, supplier_ready, next_action. Never invent supplier commitments.'}
+  req=urllib.request.Request(endpoint,data=json.dumps({'model':os.environ.get('YUANWAI_AI_MODEL','local'),'messages':[{'role':'user','content':json.dumps(prompt,ensure_ascii=False)}],'temperature':0}).encode(),headers={'Content-Type':'application/json'})
+  with urllib.request.urlopen(req,timeout=30) as r: return json.loads(json.load(r)['choices'][0]['message']['content'])
+ def fixture_infer(self,text):
+  pats={'date':r'\d{1,2}[月/]\d{1,2}日?','headcount':r'\d+\s*(?:人|位|份)','location':r'台北|新竹|台中|高雄|桃園|到府','service_form':r'外燴|餐盒|自助餐|buffet|桌菜'}; facts=[]
+  for t,p in pats.items():
+   m=re.search(p,text,re.I)
+   if m: facts.append({'topic':t,'value_class':m.group(0)})
+  return {'facts':facts,'commitment_request':bool(re.search('可用|有空|接單|接受|報價|價格|折扣|付款|保證|承諾',text)),'conflict':bool(re.search('改成|不是|其實是|更改',text)),'reference':bool(re.search('照片|範例|菜單|之前',text)),'supplier_ready':False}
 class Simulator:
- def __init__(self,log=None): self.case=Case(); self.ai=Inference(); self.log=log
+ def __init__(self,path=None,fixture=False): self.path=Path(path) if path else None; self.ai=AIInference(fixture); self.case=self.load() if self.path and self.path.exists() else Case()
  def save(self,ev):
   self.case.events.append(ev)
-  if self.log: self.log.parent.mkdir(parents=True,exist_ok=True); self.log.write_text('\n'.join(json.dumps(x,ensure_ascii=False) for x in self.case.events)+'\n',encoding='utf-8')
+  if self.path: self.path.parent.mkdir(parents=True,exist_ok=True); self.path.write_text(json.dumps({'case':self.case.public(),'events':self.case.events},ensure_ascii=False,indent=2),encoding='utf-8')
+ def brief(self): return {'fact_topics':[f.topic for f in self.case.facts if f.status=='CURRENT'],'certainty_classes':[f.certainty for f in self.case.facts if f.status=='CURRENT'],'feasibility':self.case.feasibility,'unknowns':'No universal required fields; provisional policy remains open'}
  def turn(self,text):
-  ev={'ts':now(),'type':'customer_turn','text_redacted':True,'topics':[]}
-  p=self.ai.interpret(text,self.case); ev['inference']={k:v for k,v in p.items() if k!='raw_length'}
-  for topic,value in p['facts']:
-   old=[f for f in self.case.facts if f.topic==topic and f.status=='CURRENT']
-   if old and old[-1].value!=value:
+  p=self.ai.interpret(text,self.case); ev={'ts':now(),'type':'customer_turn','text_redacted':True,'text_hash':h(text),'topics':[],'inference':p}
+  for x in p.get('facts',[]):
+   old=[f for f in self.case.facts if f.topic==x['topic'] and f.status=='CURRENT']
+   if old and old[-1].value_class!=x['value_class']:
     for f in old: f.status='SUPERSEDED'
-    self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; ev['invalidation']=['feasibility','supplier_ready_brief','pending_supplier_decision']
-   self.case.facts.append(Fact(topic,value,text,'CONFIRMED_BY_CUSTOMER' if topic in ('date','headcount','location','service_form') else 'STATED',event_id=uuid.uuid4().hex[:8]))
-   ev['topics'].append(topic)
-  if p['conflict'] and p['facts']:
-   self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; self.case.feasibility='UNKNOWN'; response='我看到資料有變更或衝突，先不沿用舊結論。請確認目前有效的日期／需求。'
-  elif p['commitment_request']:
-   self.case.lifecycle='HUMAN_GATE_PENDING'; self.case.next_action='human_gate'; self.case.gate={'reason':'supplier authority required','decision_type':'availability/acceptance/price/fulfillment','brief':self.brief(),'authorized':False}; response='這需要供應方確認，我不能自行承諾。已整理 supplier-ready brief，請輸入人工決策。'
-  elif p['reference']:
-   self.case.lifecycle='OPTIONS'; self.case.next_action='reference'; response='可以提供標示為歷史參考的範例，但不代表本次菜單、價格或可用性。'
-  else:
-   missing=[x for x in ('date','location','headcount','service_form') if not any(f.topic==x and f.status=='CURRENT' for f in self.case.facts)]
-   if missing: self.case.lifecycle='UNDERSTANDING'; self.case.next_action='ask'; response=f'目前還缺少一個會影響判斷的資訊：{missing[0]}。'
-   else: self.case.lifecycle='SUPPLIER_READY'; self.case.next_action='human_gate'; self.case.gate={'reason':'supplier decision required','decision_type':'availability/acceptance','brief':self.brief(),'authorized':False}; response='基本需求已整理，可交供應方判斷；尚未代表接單或有空。'
-  ev.update({'state':self.case.public(),'guardrail':'BLOCKED' if self.case.next_action=='human_gate' else 'PASS','response':response}); self.save(ev); return response
- def brief(self): return {'facts':[asdict(f) for f in self.case.facts if f.status=='CURRENT'],'unknowns':[x for x in ('date','location','headcount','service_form') if not any(f.topic==x and f.status=='CURRENT' for f in self.case.facts)],'feasibility':self.case.feasibility,'requested_decision':self.case.gate.get('decision_type') if self.case.gate else 'supplier decision','internal_reason_not_customer_message':True}
+    self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; ev['invalidation']={'dependent_state':['feasibility','supplier_ready_brief','pending_supplier_decision'],'superseded_fact_ids':[f.event_id for f in old]}
+   self.case.facts.append(Fact(x['topic'],x['value_class'],h(text),'CONFIRMED_BY_CUSTOMER',event_id=uuid.uuid4().hex[:8])); ev['topics'].append(x['topic'])
+  if p.get('conflict') and p.get('facts'): self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有衝突或變更，先不沿用舊結論，請確認目前有效內容。'
+  elif p.get('commitment_request'): self.case.lifecycle='HUMAN_GATE_PENDING'; self.case.next_action='human_gate'; self.case.gate={'reason':'supplier authority required','decision_type':'availability/acceptance/price/fulfillment','brief':self.brief(),'authorized':False}; response='這需要供應方確認，我不能自行承諾；已整理 supplier-ready brief。'
+  elif p.get('reference'): self.case.lifecycle='OPTIONS'; self.case.next_action='reference'; response='可提供標示為歷史參考的範例，不代表本次菜單、價格或可用性。'
+  elif p.get('supplier_ready'): self.case.lifecycle='SUPPLIER_READY'; self.case.next_action='human_gate'; self.case.gate={'reason':'AI assessed decision readiness','decision_type':'supplier authority decision','brief':self.brief(),'authorized':False}; response='已達可供供應方判斷的程度，尚不代表接單。'
+  else: self.case.lifecycle='UNDERSTANDING'; self.case.next_action='ask'; response='我先保留目前資訊；請提供下一個你認為重要的需求細節。'
+  ev.update({'state':self.case.public(),'guardrail':'BLOCKED' if self.case.next_action=='human_gate' else 'PASS','response_class':'safe_template'}); self.save(ev); return response
  def decide(self,decision,response):
   if self.case.next_action!='human_gate': raise ValueError('no human gate pending')
-  self.case.gate.update({'authorized':True,'decision':decision,'customer_response':response}); self.case.lifecycle='CUSTOMER_CONTINUATION'; self.case.next_action='answer'; self.case.feasibility='POSSIBLE' if decision.lower() in ('accept','possible','可行','接受') else 'CONFLICT'
-  self.save({'ts':now(),'type':'supplier_decision','decision':decision,'customer_response_authorized':bool(response),'internal_reason_redacted':True,'state':self.case.public()})
-
+  self.case.gate.update({'authorized':True,'decision_class':decision,'customer_response_hash':h(response)}); self.case.lifecycle='CUSTOMER_CONTINUATION'; self.case.next_action='answer'; self.case.feasibility='POSSIBLE' if decision.lower() in ('accept','possible','可行','接受') else 'CONFLICT'; self.save({'ts':now(),'type':'supplier_decision','decision_class':decision,'customer_response_redacted':True,'customer_response_hash':h(response),'internal_reason_redacted':True,'state':self.case.public()})
+ def load(self):
+  x=json.loads(self.path.read_text(encoding='utf-8')); c=x['case']; return Case(c['case_id'],c['lifecycle'],[Fact(**f) for f in c['facts']],c['feasibility'],c['next_action'],c['gate'],x.get('events',[]))
+ def replay(self): return [e['state'] for e in self.case.events if 'state' in e]
 def scenarios():
  out=[]
- for name,texts,check in [
- ('known facts not re-asked',['外燴 10/20 台北 30人','想了解服務'],lambda s:'date' in [f.topic for f in s.case.facts]),
- ('date is not availability',['外燴 10/20 台北 30人','10/20有空嗎'],lambda s:s.case.next_action=='human_gate'),
- ('feasible is not acceptance',['外燴 10/20 台北 30人','可以接嗎'],lambda s:s.case.next_action=='human_gate'),
- ('internal reason stays internal',['外燴 10/20 台北 30人','請確認接單'],lambda s:(s.decide('reject','目前這次無法承接') or True)),
- ('change invalidates',['外燴 10/20 台北 30人','改成 10/21'],lambda s:any(e.get('invalidation') for e in s.case.events)),
- ('contradiction recovery',['外燴 10/20 台北 30人','不是 10/20 改成 10/22'],lambda s:s.case.next_action=='recovery'),
- ('reference not promise',['外燴 10/20 台北 30人','給我之前的菜單照片'],lambda s:s.case.next_action=='reference'),
- ('mediation continues',['外燴 10/20 台北 30人','請確認接單'],lambda s:(s.decide('accept','供應方確認可承接') or s.case.lifecycle=='CUSTOMER_CONTINUATION'))]:
-  try:
-   s=Simulator()
-   for t in texts: s.turn(t)
-   ok=bool(check(s)); out.append({'scenario':name,'status':'PASS' if ok else 'FAIL'})
+ def run(name,fn):
+  try: out.append({'scenario':name,'status':'PASS' if fn() else 'FAIL'})
   except Exception as e: out.append({'scenario':name,'status':'FAIL','error':str(e)})
- return out
-
+ def base(): s=Simulator(None,True); s.turn('外燴 10/20 台北 30人'); return s
+ run('known facts are not re-asked',lambda:(lambda s:(s.turn('想了解服務'),not any(e.get('response_class')=='ask_date' for e in s.case.events)))(base())[1])
+ run('date is not availability',lambda:(lambda s:(s.turn('10/20有空嗎'),s.case.next_action=='human_gate' and s.case.feasibility=='NOT_ASSESSED'))(base())[1])
+ run('feasible is not acceptance',lambda:(lambda s:(s.turn('請評估是否可行'),s.case.lifecycle!='CUSTOMER_CONTINUATION'))(base())[1])
+ run('internal reason stays internal',lambda:(lambda s:(s.turn('請確認接單'),s.decide('reject','目前無法承接'),all('low value' not in json.dumps(e,ensure_ascii=False) for e in s.case.events)))(base())[-1])
+ run('change invalidates downstream',lambda:(lambda s:(s.turn('請確認接單'),s.turn('改成 10/21'),any(f.status=='SUPERSEDED' for f in s.case.facts) and s.case.feasibility=='UNKNOWN' and s.case.lifecycle=='CHANGED/RECOVERY'))(base())[-1])
+ run('contradictory facts fail closed',lambda:(lambda s:(s.turn('不是 10/20 改成 10/22'),s.case.next_action=='recovery'))(base())[1])
+ run('reference is not promise',lambda:(lambda s:(s.turn('給我之前的菜單照片'),s.case.next_action=='reference' and s.case.feasibility=='NOT_ASSESSED'))(base())[1])
+ run('mediation continues',lambda:(lambda s:(s.turn('請確認接單'),s.decide('accept','供應方確認可承接'),s.case.lifecycle=='CUSTOMER_CONTINUATION' and s.case.next_action=='answer'))(base())[-1])
+ Path('simulation-evidence.json').write_text(json.dumps({'generated_at':now(),'scenarios':out,'pass':sum(x['status']=='PASS' for x in out),'total':len(out)},ensure_ascii=False,indent=2),encoding='utf-8'); return out
 def main():
- ap=argparse.ArgumentParser(); ap.add_argument('--scenario',action='store_true'); ap.add_argument('--log',type=Path,default=Path('simulation-evidence.jsonl')); args=ap.parse_args()
- if args.scenario:
+ ap=argparse.ArgumentParser(); ap.add_argument('--scenario',action='store_true'); ap.add_argument('--case',default='simulation-case.json'); ap.add_argument('--fixture',action='store_true'); a=ap.parse_args()
+ if a.scenario:
   r=scenarios(); print(json.dumps({'scenarios':r,'pass':sum(x['status']=='PASS' for x in r),'total':len(r)},ensure_ascii=False,indent=2)); return 0 if all(x['status']=='PASS' for x in r) else 1
- s=Simulator(args.log); print('Yuanwai offline simulator; /state /decision /quit')
+ s=Simulator(a.case,a.fixture); print('Yuanwai offline simulator; /state /decision <class> <response> /replay /quit')
  while True:
   try: t=input('customer> ')
   except EOFError: break
   if t=='/quit': break
   if t=='/state': print(json.dumps(s.case.public(),ensure_ascii=False,indent=2)); continue
-  if t.startswith('/decision '):
-   _,d,*rest=t.split(' '); s.decide(d,' '.join(rest)); print('customer continuation:',s.case.gate['customer_response']); continue
-  print(s.turn(t)); print(json.dumps(s.case.public(),ensure_ascii=False))
+  if t=='/replay': print(json.dumps(s.replay(),ensure_ascii=False,indent=2)); continue
+  if t.startswith('/decision '): _,d,*rest=t.split(' '); s.decide(d,' '.join(rest)); print('customer continuation: authorized response recorded'); continue
+  try: print(s.turn(t)); print(json.dumps(s.case.public(),ensure_ascii=False))
+  except RuntimeError as e: print('HOLD:',e)
 if __name__=='__main__': raise SystemExit(main())

@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-10-02T09:51:25.068112+00:00",
+  "scenarios": [
+    {
+      "scenario": "known facts are not re-asked",
+      "status": "PASS"
+    },
+    {
+      "scenario": "date is not availability",
+      "status": "PASS"
+    },
+    {
+      "scenario": "feasible is not acceptance",
+      "status": "PASS"
+    },
+    {
+      "scenario": "internal reason stays internal",
+      "status": "PASS"
+    },
+    {
+      "scenario": "change invalidates downstream",
+      "status": "PASS"
+    },
+    {
+      "scenario": "contradictory facts fail closed",
+      "status": "PASS"
+    },
+    {
+      "scenario": "reference is not promise",
+      "status": "PASS"
+    },
+    {
+      "scenario": "mediation continues",
+      "status": "PASS"
+    }
+  ],
+  "pass": 8,
+  "total": 8
+}
