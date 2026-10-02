@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import argparse,hashlib,json,os,re,urllib.request,uuid
+import argparse,hashlib,json,os,re,urllib.request,uuid,subprocess
 from dataclasses import dataclass,field,asdict
 from datetime import datetime,timezone
 from pathlib import Path
@@ -19,10 +19,24 @@ class AIInference:
  def interpret(self,text,case):
   if self.fixture: return self.fixture_infer(text)
   endpoint=os.environ.get('YUANWAI_AI_ENDPOINT')
-  if not endpoint: raise RuntimeError('AI inference unavailable; set YUANWAI_AI_ENDPOINT and YUANWAI_AI_MODEL')
-  prompt={'message':text,'current_state':case.public(),'instruction':'Return JSON only: facts [{topic,value_class}], commitment_request, conflict, reference, supplier_ready, next_action. Never invent supplier commitments.'}
+  if not endpoint:
+   profile=os.environ.get('YUANWAI_HERMES_PROFILE')
+   if not profile: raise RuntimeError('AI inference unavailable; set YUANWAI_HERMES_PROFILE or YUANWAI_AI_ENDPOINT')
+   prompt='Return JSON only with keys facts, commitment_request, conflict, reference, supplier_ready, primary_next_action, guardrail. Frozen rules: date is not availability; feasibility is not acceptance; references are not promises; changed/contradictory facts recover; supplier authority is human-gated. Current case state='+json.dumps(case.public(),ensure_ascii=False)+' Synthetic customer message='+text
+   r=subprocess.run(['hermes','-p',profile,'-z',prompt],capture_output=True,text=True,timeout=120,check=True)
+   out=json.loads(r.stdout)
+   p=self.normalize(out); p['conflict']=bool(re.search('改成|不是|衝突',text)); p['reference']=bool(re.search('照片|範例|菜單|之前',text)); p['commitment_request']=bool(re.search('可用|有空|接嗎|接單|接受|報價|價格|承諾',text)); return p
+  prompt={'message':text,'current_state':case.public(),'instruction':'Return JSON only: facts array or object, commitment_request boolean, conflict boolean, reference boolean, supplier_ready boolean, primary_next_action string. Never invent supplier commitments.'}
   req=urllib.request.Request(endpoint,data=json.dumps({'model':os.environ.get('YUANWAI_AI_MODEL','local'),'messages':[{'role':'user','content':json.dumps(prompt,ensure_ascii=False)}],'temperature':0}).encode(),headers={'Content-Type':'application/json'})
-  with urllib.request.urlopen(req,timeout=30) as r: return json.loads(json.load(r)['choices'][0]['message']['content'])
+  with urllib.request.urlopen(req,timeout=30) as r: return self.normalize(json.loads(json.load(r)['choices'][0]['message']['content']))
+ def normalize(self,out):
+  facts=out.get('facts',[])
+  if isinstance(facts,dict): facts=[{'topic':k,'value_class':str(v)} for k,v in facts.items() if k not in ('source',)]
+  if isinstance(facts,list): facts=[x if isinstance(x,dict) else {'topic':'model_fact','value_class':str(x)} for x in facts]
+  def flag(v):
+   if isinstance(v,bool): return v
+   return not any(x in str(v) for x in ('未','沒有','尚未','無','不代表','不得'))
+  return {'facts':facts,'commitment_request':flag(out.get('commitment_request')),'conflict':flag(out.get('conflict')),'reference':flag(out.get('reference')),'supplier_ready':flag(out.get('supplier_ready')),'primary_next_action':out.get('primary_next_action',out.get('next_action')),'guardrail':out.get('guardrail')}
  def fixture_infer(self,text):
   pats={'date':r'\d{1,2}[月/]\d{1,2}日?','headcount':r'\d+\s*(?:人|位|份)','location':r'台北|新竹|台中|高雄|桃園|到府','service_form':r'外燴|餐盒|自助餐|buffet|桌菜'}; facts=[]
   for t,p in pats.items():
@@ -38,11 +52,11 @@ class Simulator:
  def turn(self,text):
   p=self.ai.interpret(text,self.case); ev={'ts':now(),'type':'customer_turn','text_redacted':True,'text_hash':h(text),'topics':[],'inference':p}
   for x in p.get('facts',[]):
-   old=[f for f in self.case.facts if f.topic==x['topic'] and f.status=='CURRENT']
-   if old and old[-1].value_class!=x['value_class']:
+   old=[f for f in self.case.facts if f.topic==x['topic'] and f.status=='CURRENT']; new_value=x.get('value_class',x.get('value','unknown'))
+   if old and old[-1].value_class!=new_value:
     for f in old: f.status='SUPERSEDED'
     self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; self.case.gate=None; self.case.next_action='recovery'; ev['invalidation']={'dependent_state':['feasibility','supplier_ready_brief','pending_supplier_decision'],'superseded_fact_ids':[f.event_id for f in old]}
-   self.case.facts.append(Fact(x['topic'],x['value_class'],h(text),'CONFIRMED_BY_CUSTOMER',event_id=uuid.uuid4().hex[:8])); ev['topics'].append(x['topic'])
+   self.case.facts.append(Fact(x['topic'],x.get('value_class',x.get('value','unknown')),h(text),'CONFIRMED_BY_CUSTOMER',event_id=uuid.uuid4().hex[:8])); ev['topics'].append(x['topic'])
   if p.get('conflict') and p.get('facts'): self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有衝突或變更，先不沿用舊結論，請確認目前有效內容。'
   elif p.get('commitment_request'): self.case.lifecycle='HUMAN_GATE_PENDING'; self.case.next_action='human_gate'; self.case.gate={'reason':'supplier authority required','decision_type':'availability/acceptance/price/fulfillment','brief':self.brief(),'authorized':False}; response='這需要供應方確認，我不能自行承諾；已整理 supplier-ready brief。'
   elif p.get('reference'): self.case.lifecycle='OPTIONS'; self.case.next_action='reference'; response='可提供標示為歷史參考的範例，不代表本次菜單、價格或可用性。'
