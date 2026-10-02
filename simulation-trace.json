@@ -1,1 +1,186 @@
-{"generated_at":"2026-10-02","public_safe":true,"trace":[{"event":"customer_turn","lifecycle":"UNDERSTANDING","next_action":"ask","guardrail":"PASS","facts":["date","location","headcount","service_form"]},{"event":"customer_commitment_request","lifecycle":"HUMAN_GATE_PENDING","next_action":"human_gate","guardrail":"BLOCKED","gate":"supplier authority required"},{"event":"material_change","lifecycle":"CHANGED/RECOVERY","next_action":"recovery","guardrail":"PASS","gate":null,"invalidation":["feasibility","supplier_ready_brief","pending_supplier_decision"],"superseded":true},{"event":"supplier_decision","lifecycle":"CUSTOMER_CONTINUATION","next_action":"answer","guardrail":"PASS","internal_reason":"redacted","customer_response":"hash-only"}],"scenario_evidence":"simulation-evidence.json","ai_evidence":"ai-inference-evidence.json"}
+{
+  "public_safe": true,
+  "source": "actual simulator fixture run",
+  "events": [
+    {
+      "type": "customer_turn",
+      "state": {
+        "case_id": "case-5e5d5576",
+        "lifecycle": "UNDERSTANDING",
+        "facts": [
+          {
+            "topic": "date",
+            "value_class": "10/20",
+            "wording_hash": "f13cd67302a8b419",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "5d152569"
+          },
+          {
+            "topic": "headcount",
+            "value_class": "30人",
+            "wording_hash": "f13cd67302a8b419",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "4d5eb897"
+          },
+          {
+            "topic": "location",
+            "value_class": "台北",
+            "wording_hash": "f13cd67302a8b419",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "b81c1489"
+          },
+          {
+            "topic": "service_form",
+            "value_class": "外燴",
+            "wording_hash": "f13cd67302a8b419",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "b96f337d"
+          }
+        ],
+        "feasibility": "NOT_ASSESSED",
+        "next_action": "ask",
+        "gate": null
+      },
+      "topics": [
+        "date",
+        "headcount",
+        "location",
+        "service_form"
+      ],
+      "invalidation": null,
+      "guardrail": "PASS",
+      "response_class": "safe_template"
+    },
+    {
+      "type": "customer_turn",
+      "state": {
+        "case_id": "case-5e5d5576",
+        "lifecycle": "HUMAN_GATE_PENDING",
+        "facts": [
+          {
+            "topic": "date",
+            "value_class": "10/20",
+            "wording_hash": "f13cd67302a8b419",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "5d152569"
+          },
+          {
+            "topic": "headcount",
+            "value_class": "30人",
+            "wording_hash": "f13cd67302a8b419",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "4d5eb897"
+          },
+          {
+            "topic": "location",
+            "value_class": "台北",
+            "wording_hash": "f13cd67302a8b419",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "b81c1489"
+          },
+          {
+            "topic": "service_form",
+            "value_class": "外燴",
+            "wording_hash": "f13cd67302a8b419",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "b96f337d"
+          }
+        ],
+        "feasibility": "NOT_ASSESSED",
+        "next_action": "human_gate",
+        "gate": {
+          "reason": "supplier authority required",
+          "decision_type": "availability/acceptance/price/fulfillment",
+          "brief": {
+            "fact_topics": [
+              "date",
+              "headcount",
+              "location",
+              "service_form"
+            ],
+            "certainty_classes": [
+              "CONFIRMED_BY_CUSTOMER",
+              "CONFIRMED_BY_CUSTOMER",
+              "CONFIRMED_BY_CUSTOMER",
+              "CONFIRMED_BY_CUSTOMER"
+            ],
+            "feasibility": "NOT_ASSESSED",
+            "unknowns": "No universal required fields; provisional policy remains open"
+          },
+          "authorized": false
+        }
+      },
+      "topics": [],
+      "invalidation": null,
+      "guardrail": "BLOCKED",
+      "response_class": "safe_template"
+    },
+    {
+      "type": "customer_turn",
+      "state": {
+        "case_id": "case-5e5d5576",
+        "lifecycle": "CHANGED/RECOVERY",
+        "facts": [
+          {
+            "topic": "headcount",
+            "value_class": "30人",
+            "wording_hash": "f13cd67302a8b419",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "4d5eb897"
+          },
+          {
+            "topic": "location",
+            "value_class": "台北",
+            "wording_hash": "f13cd67302a8b419",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "b81c1489"
+          },
+          {
+            "topic": "service_form",
+            "value_class": "外燴",
+            "wording_hash": "f13cd67302a8b419",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "b96f337d"
+          },
+          {
+            "topic": "date",
+            "value_class": "10/21",
+            "wording_hash": "489a91f208f8cec3",
+            "certainty": "CONFIRMED_BY_CUSTOMER",
+            "status": "CURRENT",
+            "event_id": "ff2f9a99"
+          }
+        ],
+        "feasibility": "UNKNOWN",
+        "next_action": "recovery",
+        "gate": null
+      },
+      "topics": [
+        "date"
+      ],
+      "invalidation": {
+        "dependent_state": [
+          "feasibility",
+          "supplier_ready_brief",
+          "pending_supplier_decision"
+        ],
+        "superseded_fact_ids": [
+          "5d152569"
+        ]
+      },
+      "guardrail": "PASS",
+      "response_class": "safe_template"
+    }
+  ]
+}

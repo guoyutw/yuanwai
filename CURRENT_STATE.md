@@ -28,11 +28,9 @@ This remains a candidate direction under experiment, not a canonical final busin
 
 ## NEXT ACTION
 
-Create the smallest implementation/simulation issue from the frozen contract, without adding model, database, framework, hosting, marketplace, vendor SaaS, or autonomous quoting scope. Stable ingress remains an implementation prerequisite before real cases.
+Issue #74 offline simulator candidate is published on `main` at `43fe215c4704535d5e4613f4b3348f98f9d1361f` and remains OPEN pending FINAL SPEC REVIEW. Do not create LINE integration work until review PASS. The next action is to resolve the remaining review blockers, including a genuine configured model inference run; no model/provider is promoted to product authority.
 
 - [State / AI Operating Contract 0.1](records/contract-state-ai-operating-0.1.md) — frozen owner contract for lifecycle, provenance, gating, supplier-ready, recovery, mediation, and public-safe logging.
-
-The offline simulator implementation is now on the Issue #74 candidate branch and awaits independent review. After review PASS, promote the exact reviewed candidate to `main`; only then create a separate LINE synthetic E2E issue.
 
 ## CLEAR CONDITION
 
