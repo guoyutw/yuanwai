@@ -32,7 +32,7 @@ Create the smallest implementation/simulation issue from the frozen contract, wi
 
 - [State / AI Operating Contract 0.1](records/contract-state-ai-operating-0.1.md) — frozen owner contract for lifecycle, provenance, gating, supplier-ready, recovery, mediation, and public-safe logging.
 
-The downstream experiment still requires at least 5 real new inquiries with reviewable public-safe records before deciding KEEP, REVISE, or DROP the qualification candidate.
+The offline simulator implementation is now on the Issue #74 candidate branch and awaits independent review. After review PASS, promote the exact reviewed candidate to `main`; only then create a separate LINE synthetic E2E issue.
 
 ## CLEAR CONDITION
 

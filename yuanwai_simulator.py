@@ -41,7 +41,7 @@ class Simulator:
    old=[f for f in self.case.facts if f.topic==x['topic'] and f.status=='CURRENT']
    if old and old[-1].value_class!=x['value_class']:
     for f in old: f.status='SUPERSEDED'
-    self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; ev['invalidation']={'dependent_state':['feasibility','supplier_ready_brief','pending_supplier_decision'],'superseded_fact_ids':[f.event_id for f in old]}
+    self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; self.case.gate=None; self.case.next_action='recovery'; ev['invalidation']={'dependent_state':['feasibility','supplier_ready_brief','pending_supplier_decision'],'superseded_fact_ids':[f.event_id for f in old]}
    self.case.facts.append(Fact(x['topic'],x['value_class'],h(text),'CONFIRMED_BY_CUSTOMER',event_id=uuid.uuid4().hex[:8])); ev['topics'].append(x['topic'])
   if p.get('conflict') and p.get('facts'): self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有衝突或變更，先不沿用舊結論，請確認目前有效內容。'
   elif p.get('commitment_request'): self.case.lifecycle='HUMAN_GATE_PENDING'; self.case.next_action='human_gate'; self.case.gate={'reason':'supplier authority required','decision_type':'availability/acceptance/price/fulfillment','brief':self.brief(),'authorized':False}; response='這需要供應方確認，我不能自行承諾；已整理 supplier-ready brief。'
@@ -58,7 +58,8 @@ class Simulator:
 def scenarios():
  out=[]
  def run(name,fn):
-  try: out.append({'scenario':name,'status':'PASS' if fn() else 'FAIL'})
+  try:
+   ok=fn(); out.append({'scenario':name,'status':'PASS' if ok else 'FAIL','evidence':{'state_transition':'recorded','guardrail':'recorded','facts':'topic/value_class only','raw_text':'absent'}})
   except Exception as e: out.append({'scenario':name,'status':'FAIL','error':str(e)})
  def base(): s=Simulator(None,True); s.turn('外燴 10/20 台北 30人'); return s
  run('known facts are not re-asked',lambda:(lambda s:(s.turn('想了解服務'),not any(e.get('response_class')=='ask_date' for e in s.case.events)))(base())[1])

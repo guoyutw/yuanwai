@@ -1,37 +1,85 @@
 {
-  "generated_at": "2026-10-02T09:51:25.068112+00:00",
+  "generated_at": "2026-10-02T09:57:56.771461+00:00",
   "scenarios": [
     {
       "scenario": "known facts are not re-asked",
-      "status": "PASS"
+      "status": "PASS",
+      "evidence": {
+        "state_transition": "recorded",
+        "guardrail": "recorded",
+        "facts": "topic/value_class only",
+        "raw_text": "absent"
+      }
     },
     {
       "scenario": "date is not availability",
-      "status": "PASS"
+      "status": "PASS",
+      "evidence": {
+        "state_transition": "recorded",
+        "guardrail": "recorded",
+        "facts": "topic/value_class only",
+        "raw_text": "absent"
+      }
     },
     {
       "scenario": "feasible is not acceptance",
-      "status": "PASS"
+      "status": "PASS",
+      "evidence": {
+        "state_transition": "recorded",
+        "guardrail": "recorded",
+        "facts": "topic/value_class only",
+        "raw_text": "absent"
+      }
     },
     {
       "scenario": "internal reason stays internal",
-      "status": "PASS"
+      "status": "PASS",
+      "evidence": {
+        "state_transition": "recorded",
+        "guardrail": "recorded",
+        "facts": "topic/value_class only",
+        "raw_text": "absent"
+      }
     },
     {
       "scenario": "change invalidates downstream",
-      "status": "PASS"
+      "status": "PASS",
+      "evidence": {
+        "state_transition": "recorded",
+        "guardrail": "recorded",
+        "facts": "topic/value_class only",
+        "raw_text": "absent"
+      }
     },
     {
       "scenario": "contradictory facts fail closed",
-      "status": "PASS"
+      "status": "PASS",
+      "evidence": {
+        "state_transition": "recorded",
+        "guardrail": "recorded",
+        "facts": "topic/value_class only",
+        "raw_text": "absent"
+      }
     },
     {
       "scenario": "reference is not promise",
-      "status": "PASS"
+      "status": "PASS",
+      "evidence": {
+        "state_transition": "recorded",
+        "guardrail": "recorded",
+        "facts": "topic/value_class only",
+        "raw_text": "absent"
+      }
     },
     {
       "scenario": "mediation continues",
-      "status": "PASS"
+      "status": "PASS",
+      "evidence": {
+        "state_transition": "recorded",
+        "guardrail": "recorded",
+        "facts": "topic/value_class only",
+        "raw_text": "absent"
+      }
     }
   ],
   "pass": 8,

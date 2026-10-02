@@ -1,0 +1,10 @@
+{
+  "path": "OpenAI-compatible HTTP adapter",
+  "endpoint_class": "loopback",
+  "model_class": "configured",
+  "result_topics": [
+    "date"
+  ],
+  "fixture": false,
+  "status": "PASS"
+}
