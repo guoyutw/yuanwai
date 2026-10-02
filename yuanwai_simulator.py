@@ -11,14 +11,16 @@ class Fact:
 @dataclass
 class Case:
  case_id:str=field(default_factory=lambda:'case-'+uuid.uuid4().hex[:8]); lifecycle:str='INTAKE'; facts:list[Fact]=field(default_factory=list); feasibility:str='NOT_ASSESSED'; next_action:str='ask'; gate:dict|None=None; events:list[dict]=field(default_factory=list)
- def public(self):
-  if self.gate:
+ def public(self,safe=False):
+  if not self.gate: g=None
+  else:
    g={k:v for k,v in self.gate.items() if k not in ('customer_response','internal_reason')}
-   if isinstance(g.get('brief'),dict):
+   if safe and isinstance(g.get('brief'),dict):
     b=dict(g['brief']); b['facts']=[{'topic':f['topic'],'value_hash':h(str(f['value'])),'certainty':f['certainty'],'provenance_hash':f['provenance_hash']} for f in b.get('facts',[])]
     g['brief']=b
-  else: g=None
-  return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[asdict(x) for x in self.facts if x.status=='CURRENT'],'feasibility':self.feasibility,'next_action':self.next_action,'gate':g}
+  facts=[asdict(x) for x in self.facts if x.status=='CURRENT']
+  if safe: facts=[{k:v for k,v in f.items() if k not in ('value',)}|{'value_hash':h(str(f['value']))} for f in facts]
+  return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':facts,'feasibility':self.feasibility,'next_action':self.next_action,'gate':g}
  def internal(self):
   return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[{'topic':f.topic,'value':f.value or f.value_class,'certainty':f.certainty,'status':f.status} for f in self.facts if f.status=='CURRENT'],'feasibility':self.feasibility,'next_action':self.next_action}
 class AIInference:

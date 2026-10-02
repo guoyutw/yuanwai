@@ -32,10 +32,10 @@
     },
     {
       "type": "customer_turn",
-      "lifecycle": "UNDERSTANDING",
-      "next_action": "ask",
-      "gate": false,
-      "guardrail": "PASS",
+      "lifecycle": "SUPPLIER_READY",
+      "next_action": "human_gate",
+      "gate": true,
+      "guardrail": "BLOCKED",
       "structured_consumed": true
     }
   ],
@@ -86,8 +86,8 @@
     },
     "authorized": false
   },
-  "final_next_action": "ask",
-  "final_guardrail": "PASS",
+  "final_next_action": "human_gate",
+  "final_guardrail": "BLOCKED",
   "provider_model_product_decision": false,
   "raw_customer_text_persisted": false
 }
