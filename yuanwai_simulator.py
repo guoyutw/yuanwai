@@ -36,13 +36,14 @@ class AIInference:
   def flag(v):
    if isinstance(v,bool): return v
    return not any(x in str(v) for x in ('未','沒有','尚未','無','不代表','不得'))
-  return {'facts':facts,'commitment_request':flag(out.get('commitment_request')),'conflict':flag(out.get('conflict')),'reference':flag(out.get('reference')),'supplier_ready':flag(out.get('supplier_ready')),'primary_next_action':out.get('primary_next_action',out.get('next_action')),'guardrail':out.get('guardrail')}
+  action=str(out.get('primary_next_action',out.get('next_action',''))); guard=str(out.get('guardrail',''))
+  return {'facts':facts,'commitment_request':flag(out.get('commitment_request')),'conflict':flag(out.get('conflict')),'reference':flag(out.get('reference')),'supplier_ready':flag(out.get('supplier_ready')),'primary_next_action':action,'model_requires_human_gate':('human_gate' in action.lower() or 'human gate' in action.lower() or 'supplier authority' in guard.lower()),'guardrail':out.get('guardrail')}
  def fixture_infer(self,text):
   pats={'date':r'\d{1,2}[月/]\d{1,2}日?','headcount':r'\d+\s*(?:人|位|份)','location':r'台北|新竹|台中|高雄|桃園|到府','service_form':r'外燴|餐盒|自助餐|buffet|桌菜'}; facts=[]
   for t,p in pats.items():
    m=re.search(p,text,re.I)
    if m: facts.append({'topic':t,'value_class':m.group(0)})
-  return {'facts':facts,'commitment_request':bool(re.search('可用|有空|接單|接受|報價|價格|折扣|付款|保證|承諾',text)),'conflict':bool(re.search('改成|不是|其實是|更改',text)),'reference':bool(re.search('照片|範例|菜單|之前',text)),'supplier_ready':False}
+  return {'facts':facts,'commitment_request':bool(re.search('可用|有空|接單|承作|接受|報價|價格|折扣|付款|保證|承諾',text)),'conflict':bool(re.search('改成|不是|其實是|更改',text)),'reference':bool(re.search('照片|範例|菜單|之前',text)),'supplier_ready':False}
 class Simulator:
  def __init__(self,path=None,fixture=False): self.path=Path(path) if path else None; self.ai=AIInference(fixture); self.case=self.load() if self.path and self.path.exists() else Case()
  def save(self,ev):
@@ -58,7 +59,7 @@ class Simulator:
     self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; self.case.gate=None; self.case.next_action='recovery'; ev['invalidation']={'dependent_state':['feasibility','supplier_ready_brief','pending_supplier_decision'],'superseded_fact_ids':[f.event_id for f in old]}
    self.case.facts.append(Fact(x['topic'],x.get('value_class',x.get('value','unknown')),h(text),'CONFIRMED_BY_CUSTOMER',event_id=uuid.uuid4().hex[:8])); ev['topics'].append(x['topic'])
   if p.get('conflict') and p.get('facts'): self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有衝突或變更，先不沿用舊結論，請確認目前有效內容。'
-  elif p.get('commitment_request'): self.case.lifecycle='HUMAN_GATE_PENDING'; self.case.next_action='human_gate'; self.case.gate={'reason':'supplier authority required','decision_type':'availability/acceptance/price/fulfillment','brief':self.brief(),'authorized':False}; response='這需要供應方確認，我不能自行承諾；已整理 supplier-ready brief。'
+  elif p.get('commitment_request') or p.get('model_requires_human_gate'): self.case.lifecycle='HUMAN_GATE_PENDING'; self.case.next_action='human_gate'; self.case.gate={'reason':'supplier authority required','decision_type':'availability/acceptance/price/fulfillment','brief':self.brief(),'authorized':False}; response='這需要供應方確認，我不能自行承諾；已整理 supplier-ready brief。'
   elif p.get('reference'): self.case.lifecycle='OPTIONS'; self.case.next_action='reference'; response='可提供標示為歷史參考的範例，不代表本次菜單、價格或可用性。'
   elif p.get('supplier_ready'): self.case.lifecycle='SUPPLIER_READY'; self.case.next_action='human_gate'; self.case.gate={'reason':'AI assessed decision readiness','decision_type':'supplier authority decision','brief':self.brief(),'authorized':False}; response='已達可供供應方判斷的程度，尚不代表接單。'
   else: self.case.lifecycle='UNDERSTANDING'; self.case.next_action='ask'; response='我先保留目前資訊；請提供下一個你認為重要的需求細節。'
@@ -79,6 +80,7 @@ def scenarios():
  def turns(s): return [e for e in s.case.events if e['type']=='customer_turn']
  run('known facts are not re-asked',lambda:(lambda s:(s.turn('想了解服務'),s.case.next_action=='ask' and 'date' not in json.dumps(turns(s)[-1]['inference']) and s.case.facts[0].status=='CURRENT'))(base())[1])
  run('date is not availability',lambda:(lambda s:(s.turn('10/20有空嗎'),s.case.next_action=='human_gate' and s.case.feasibility=='NOT_ASSESSED' and s.case.gate['authorized'] is False))(base())[1])
+ run('承作嗎 is human gate',lambda:(lambda s:(s.turn('能承作嗎？'),s.case.next_action=='human_gate' and s.case.lifecycle=='HUMAN_GATE_PENDING' and s.case.events[-1]['guardrail']=='BLOCKED'))(base())[1])
  run('feasible is not acceptance',lambda:(lambda s:(s.turn('請評估是否可行'),s.case.feasibility=='NOT_ASSESSED' and s.case.lifecycle!='CUSTOMER_CONTINUATION' and s.case.next_action!='answer'))(base())[1])
  run('internal reason stays internal',lambda:(lambda s:(s.turn('請確認接單'),s.decide('reject','目前無法承接，internal low value reason'),s.case.gate['customer_response_hash'] and all('internal low value' not in json.dumps(e,ensure_ascii=False) for e in s.case.events)))(base())[-1])
  run('change invalidates downstream',lambda:(lambda s:(s.turn('請確認接單'),s.turn('改成 10/21'),s.case.gate is None and s.case.next_action=='recovery' and any(f.status=='SUPERSEDED' for f in s.case.facts) and s.case.feasibility=='UNKNOWN'))(base())[-1])

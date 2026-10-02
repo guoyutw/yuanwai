@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-02T10:12:14.409281+00:00",
+  "generated_at": "2026-10-02T14:04:01.110842+00:00",
   "scenarios": [
     {
       "scenario": "known facts are not re-asked",
@@ -13,6 +13,16 @@
     },
     {
       "scenario": "date is not availability",
+      "status": "PASS",
+      "evidence": {
+        "state_transition": "recorded",
+        "guardrail": "recorded",
+        "facts": "topic/value_class only",
+        "raw_text": "absent"
+      }
+    },
+    {
+      "scenario": "承作嗎 is human gate",
       "status": "PASS",
       "evidence": {
         "state_transition": "recorded",
@@ -82,6 +92,6 @@
       }
     }
   ],
-  "pass": 8,
-  "total": 8
+  "pass": 9,
+  "total": 9
 }
