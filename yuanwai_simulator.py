@@ -24,7 +24,7 @@ class Case:
   if safe: facts=[{k:v for k,v in f.items() if k not in ('value','value_class')}|{'value_hash':h(str(f['value']))} for f in facts]
   return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':facts,'feasibility':self.feasibility,'next_action':self.next_action,'gate':g}
  def internal(self):
-  return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[{'topic':f.topic,'value':f.value or f.value_class,'certainty':f.certainty,'status':f.status} for f in self.facts if f.status=='CURRENT'],'feasibility':self.feasibility,'next_action':self.next_action}
+  return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[{'topic':f.topic,'value':f.value or f.value_class,'certainty':f.certainty,'status':f.status,'provenance_hash':f.provenance_hash} for f in self.facts if f.status in ('CURRENT','CONTRADICTED')],'feasibility':self.feasibility,'next_action':self.next_action}
  def local(self): return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[asdict(f) for f in self.facts],'feasibility':self.feasibility,'next_action':self.next_action,'gate':self.gate}
 class AIInference:
  def __init__(self,fixture=False): self.fixture=fixture
@@ -75,6 +75,12 @@ class Simulator:
   known={f['topic'] for f in facts}; return {'facts':facts,'feasibility':self.case.feasibility,'unknowns':[],'conflicts':[]}
  def turn(self,text):
   p=self.ai.interpret(text,self.case); changed=False; ev={'ts':now(),'type':'customer_turn','text_redacted':True,'text_hash':h(text),'topics':[],'inference':p}
+  candidates=[f for f in self.case.facts if f.status=='CONTRADICTED']
+  if candidates and not p.get('facts') and re.search('前一個|第一個|之前那個|第一筆',text):
+   chosen=candidates[0]
+   chosen.status='CURRENT'
+   for f in candidates[1:]: f.status='REJECTED'
+   self.case.lifecycle='UNDERSTANDING'; self.case.feasibility='NOT_ASSESSED'; self.case.next_action='ask'; ev['clarification']={'selected_event_id':chosen.event_id,'selected_provenance_hash':chosen.provenance_hash}; ev.update({'state':self.case.public(),'guardrail':'PASS','response_class':'safe_template'}); self.save(ev); return '收到，先以第一個日期為目前版本；如果不是，請再告訴我。'
   for x in p.get('facts',[]):
    conflict_added=False
    old=[f for f in self.case.facts if f.topic==x['topic'] and f.status=='CURRENT']; new_value=x.get('value',x.get('value_class','unknown'))
@@ -107,7 +113,7 @@ class Simulator:
  def decide(self,decision,internal_reason='',authorized_customer_response=''):
   if self.case.next_action!='human_gate': raise ValueError('no human gate pending')
   if not authorized_customer_response: raise ValueError('outward customer response required; HOLD')
-  self.case.gate.update({'authorized':True,'decision_class':decision,'internal_reason':internal_reason,'authorized_customer_response':authorized_customer_response}); self.case.lifecycle='CUSTOMER_CONTINUATION'; self.case.next_action='answer'; self.case.feasibility='POSSIBLE' if decision.lower() in ('accept','possible','可行','接受') else 'CONFLICT'; self.save({'ts':now(),'type':'supplier_decision','decision_class':decision,'decision_redacted':True,'internal_reason_redacted':True,'authorized_response_redacted':True,'authorized_response_hash':h(authorized_customer_response),'state':self.case.public(safe=True)}); return authorized_customer_response
+  self.case.gate.update({'authorized':True,'decision_class':decision,'internal_reason':internal_reason,'authorized_customer_response':authorized_customer_response}); self.case.lifecycle='CUSTOMER_CONTINUATION'; self.case.next_action='answer'; self.save({'ts':now(),'type':'supplier_decision','decision_class':decision,'decision_redacted':True,'internal_reason_redacted':True,'authorized_response_redacted':True,'authorized_response_hash':h(authorized_customer_response),'state':self.case.public(safe=True)}); return authorized_customer_response
  def load(self):
   x=json.loads(self.path.read_text(encoding='utf-8')); c=x['case']; return Case(c['case_id'],c['lifecycle'],[Fact(**f) for f in c['facts']],c['feasibility'],c['next_action'],c['gate'],x.get('events',[]))
  def replay(self): return [e['state'] for e in self.case.events if 'state' in e]

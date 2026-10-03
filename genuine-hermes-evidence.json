@@ -99,12 +99,13 @@
       ],
       "feasibility": "NOT_ASSESSED",
       "unknowns": [
+        "10/20當日是否有檔期",
         "供應商是否接受此案件"
       ],
       "conflicts": []
     },
     "authorized": false,
-    "decision_request_hash": "6b62ce5ede25da28"
+    "decision_request_hash": "a5283444fd5b3ff2"
   },
   "decision_continuation": {
     "decision_class": "accept",
@@ -150,7 +151,13 @@
           }
         ],
         "feasibility": "NOT_ASSESSED",
-        "unknowns": [],
+        "unknowns": [
+          "time",
+          "menu_preferences",
+          "dietary",
+          "setup_logistics",
+          "invoice_admin"
+        ],
         "conflicts": []
       },
       "authorized": false,
