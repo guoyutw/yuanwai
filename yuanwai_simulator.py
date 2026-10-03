@@ -25,6 +25,7 @@ class Case:
   return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':facts,'feasibility':self.feasibility,'next_action':self.next_action,'gate':g}
  def internal(self):
   return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[{'topic':f.topic,'value':f.value or f.value_class,'certainty':f.certainty,'status':f.status} for f in self.facts if f.status=='CURRENT'],'feasibility':self.feasibility,'next_action':self.next_action}
+ def local(self): return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[asdict(f) for f in self.facts],'feasibility':self.feasibility,'next_action':self.next_action,'gate':self.gate}
 class AIInference:
  def __init__(self,fixture=False): self.fixture=fixture
  def interpret(self,text,case):
@@ -63,36 +64,43 @@ class AIInference:
   for t,p in pats.items():
    m=re.search(p,text,re.I)
    if m: facts.append({'topic':t,'value_class':m.group(0)})
-  return {'facts':facts,'commitment_request':bool(re.search('可用|有空|接單|承作|接受|報價|價格|折扣|付款|保證|承諾',text)),'conflict':bool(re.search('改成|不是|其實是|更改',text)),'reference':bool(re.search('照片|範例|菜單|之前',text)),'supplier_ready':False}
+  return {'facts':facts,'commitment_request':bool(re.search('可用|有空|接單|承作|接受|報價|價格|折扣|付款|保證|承諾',text)),'conflict':bool(re.search('可能|或是|還是|不確定|兩個日期',text)),'reference':bool(re.search('照片|範例|菜單|之前',text)),'supplier_ready':False}
 class Simulator:
  def __init__(self,path=None,fixture=False): self.path=Path(path) if path else None; self.ai=AIInference(fixture); self.case=self.load() if self.path and self.path.exists() else Case()
  def save(self,ev):
   self.case.events.append(ev)
-  if self.path: self.path.parent.mkdir(parents=True,exist_ok=True); self.path.write_text(json.dumps({'case':self.case.public(),'events':self.case.events},ensure_ascii=False,indent=2),encoding='utf-8')
+  if self.path: self.path.parent.mkdir(parents=True,exist_ok=True); self.path.write_text(json.dumps({'case':self.case.local(),'events':self.case.events},ensure_ascii=False,indent=2),encoding='utf-8')
  def brief(self):
   facts=[{'topic':f.topic,'value':f.value or f.value_class,'certainty':f.certainty,'provenance_hash':f.provenance_hash} for f in self.case.facts if f.status=='CURRENT']
   known={f['topic'] for f in facts}; return {'facts':facts,'feasibility':self.case.feasibility,'unknowns':[],'conflicts':[]}
  def turn(self,text):
   p=self.ai.interpret(text,self.case); changed=False; ev={'ts':now(),'type':'customer_turn','text_redacted':True,'text_hash':h(text),'topics':[],'inference':p}
   for x in p.get('facts',[]):
+   conflict_added=False
    old=[f for f in self.case.facts if f.topic==x['topic'] and f.status=='CURRENT']; new_value=x.get('value',x.get('value_class','unknown'))
-   if old and (old[-1].value or old[-1].value_class)!=new_value:
+   if old and (old[-1].value or old[-1].value_class)!=new_value and p.get('conflict'):
+    certainty={'customer_stated':'STATED','stated':'STATED','customer_confirmed':'CONFIRMED_BY_CUSTOMER','confirmed':'CONFIRMED_BY_CUSTOMER','inferred':'INFERRED','reference_only':'REFERENCE_ONLY','unknown':'UNKNOWN'}.get(str(x['value_class']).lower(),'STATED')
+    self.case.facts.append(Fact(x['topic'],x['value_class'],h(text),certainty,status='CONFLICT',event_id=uuid.uuid4().hex[:8],value=new_value,provenance_hash=h(text+'|'+x['topic'])))
+    conflict_added=True; changed=True; self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; self.case.gate=None; self.case.next_action='clarify'; ev.setdefault('conflicts',[]).append({'topic':x['topic'],'existing_fact_ids':[f.event_id for f in old],'new_value_hash':h(new_value)})
+   elif old and (old[-1].value or old[-1].value_class)!=new_value:
     changed=True
     for f in old: f.status='SUPERSEDED'
     self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; self.case.gate=None; self.case.next_action='recovery'; ev['invalidation']={'dependent_state':['feasibility','supplier_ready_brief','pending_supplier_decision'],'superseded_fact_ids':[f.event_id for f in old]}
-   if not old or (old[-1].value or old[-1].value_class) != new_value:
+   if not conflict_added and (not old or (old[-1].value or old[-1].value_class) != new_value):
     certainty={'customer_stated':'STATED','stated':'STATED','customer_confirmed':'CONFIRMED_BY_CUSTOMER','confirmed':'CONFIRMED_BY_CUSTOMER','inferred':'INFERRED','reference_only':'REFERENCE_ONLY','unknown':'UNKNOWN'}.get(str(x['value_class']).lower(),'STATED')
     self.case.facts.append(Fact(x['topic'],x['value_class'],h(text),certainty,event_id=uuid.uuid4().hex[:8],value=new_value,provenance_hash=h(text+'|'+x['topic'])))
    ev['topics'].append(x['topic'])
-  if changed:
-   self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有變更，已作廢受影響的舊結論與 supplier gate，請重新確認。'
-  elif p.get('conflict') and p.get('facts'): self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有衝突或變更，先不沿用舊結論，請確認目前有效內容。'
+  if changed and p.get('conflict'):
+   self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='clarify'; response='資料有衝突，保留兩個候選值，請確認哪一個才是目前有效內容。'
+  elif changed: self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有衝突或變更，先不沿用舊結論，請確認目前有效內容。'
   elif p.get('commitment_request') or p.get('model_requires_human_gate'):
    self.case.lifecycle='HUMAN_GATE_PENDING'; self.case.next_action='human_gate'; req='請供應方確認本案是否可承作（availability/acceptance），不得由 AI 自行承諾。'
    dtype=p.get('decision_type') or 'authority'; req=p.get('decision_request') or '請供應方針對本輪要求提供明確決定。'; brief=self.brief(); brief['unknowns']=p.get('unknowns',[]); brief['conflicts']=p.get('conflicts',[])
    self.case.gate={'reason':'supplier authority required','decision_type':dtype,'decision_request':req,'brief':brief,'authorized':False}; response='這需要供應方確認，我不能自行承諾；已整理 supplier-ready brief。'
   elif p.get('reference'): self.case.lifecycle='OPTIONS'; self.case.next_action='reference'; response='可提供標示為歷史參考的範例，不代表本次菜單、價格或可用性。'
-  elif p.get('supplier_ready'): self.case.lifecycle='SUPPLIER_READY'; self.case.next_action='human_gate'; self.case.gate={'reason':'AI assessed decision readiness','decision_type':'supplier authority decision','brief':self.brief(),'authorized':False}; response='已達可供供應方判斷的程度，尚不代表接單。'
+  elif p.get('supplier_ready'):
+   if not p.get('decision_type') or not p.get('decision_request'): raise RuntimeError('supplier_ready without bounded decision request; HOLD')
+   self.case.lifecycle='SUPPLIER_READY'; self.case.next_action='human_gate'; brief=self.brief(); brief['unknowns']=p.get('unknowns',[]); brief['conflicts']=p.get('conflicts',[]); self.case.gate={'reason':'AI assessed decision readiness','decision_type':p['decision_type'],'decision_request':p['decision_request'],'brief':brief,'authorized':False}; response='已達可供供應方判斷的程度，尚不代表接單。'
   else: self.case.lifecycle='UNDERSTANDING'; self.case.next_action='ask'; response='我先保留目前資訊；請提供下一個你認為重要的需求細節。'
   ev.update({'state':self.case.public(),'guardrail':'BLOCKED' if self.case.next_action=='human_gate' else 'PASS','response_class':'safe_template'}); self.save(ev); return response
  def decide(self,decision,internal_reason='',authorized_customer_response=''):
@@ -116,7 +124,7 @@ def scenarios():
  run('feasible is not acceptance',lambda:(lambda s:(s.turn('請評估是否可行'),s.case.feasibility=='NOT_ASSESSED' and s.case.lifecycle!='CUSTOMER_CONTINUATION' and s.case.next_action!='answer'))(base())[1])
  run('internal reason stays internal',lambda:(lambda s:(s.turn('請確認接單'),s.decide('reject','private capacity reason','目前無法承接本次需求。'),s.case.lifecycle=='CUSTOMER_CONTINUATION' and s.case.gate['authorized_customer_response']=='目前無法承接本次需求。' and all('private capacity reason' not in json.dumps(e,ensure_ascii=False) for e in s.case.events)))(base())[-1])
  run('change invalidates downstream',lambda:(lambda s:(s.turn('請確認接單'),s.turn('改成 10/21'),s.case.gate is None and s.case.next_action=='recovery' and any(f.status=='SUPERSEDED' for f in s.case.facts) and s.case.feasibility=='UNKNOWN'))(base())[-1])
- run('contradictory facts fail closed',lambda:(lambda s:(s.turn('改成 10/22'),s.case.next_action=='recovery' and s.case.gate is None and len([f for f in s.case.facts if f.topic=='date'])==2))(base())[1])
+ run('contradictory facts fail closed',lambda:(lambda s:(s.turn('日期也可能是 10/22'),s.case.next_action=='clarify' and s.case.gate is None and len([f for f in s.case.facts if f.topic=='date' and f.status=='CONFLICT'])==1 and len([f for f in s.case.facts if f.topic=='date' and f.status=='CURRENT'])==1))(base())[1])
  run('reference is not promise',lambda:(lambda s:(s.turn('給我之前的菜單照片'),s.case.next_action=='reference' and s.case.feasibility=='NOT_ASSESSED' and not s.case.gate))(base())[1])
  run('mediation continues',lambda:(lambda s:(s.turn('請確認接單'),s.decide('accept','','供應方確認可承接'),s.case.lifecycle=='CUSTOMER_CONTINUATION' and s.case.next_action=='answer' and s.case.gate['authorized'] is True))(base())[-1])
  Path('simulation-evidence.json').write_text(json.dumps({'generated_at':now(),'scenarios':out,'pass':sum(x['status']=='PASS' for x in out),'total':len(out)},ensure_ascii=False,indent=2),encoding='utf-8'); return out
@@ -131,7 +139,10 @@ def main():
   if t=='/quit': break
   if t=='/state': print(json.dumps(s.case.public(),ensure_ascii=False,indent=2)); continue
   if t=='/replay': print(json.dumps(s.replay(),ensure_ascii=False,indent=2)); continue
-  if t.startswith('/decision '): _,d,*rest=t.split(' ',2); s.decide(d,'',rest[0] if rest else ''); print('customer continuation:',s.case.gate.get('authorized_customer_response','HOLD')); continue
+  if t.startswith('/decision '):
+   _,payload=t.split(' ',1); parts=[x.strip() for x in payload.split('|')];
+   if len(parts)!=3: print('HOLD: /decision class | private internal reason | authorized outward response'); continue
+   print('customer continuation:',s.decide(parts[0],parts[1],parts[2])); continue
   try: print(s.turn(t)); print(json.dumps(s.case.public(),ensure_ascii=False))
   except RuntimeError as e: print('HOLD:',e)
 if __name__=='__main__': raise SystemExit(main())

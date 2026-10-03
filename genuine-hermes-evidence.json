@@ -92,19 +92,19 @@
         },
         {
           "topic": "budget",
-          "value_hash": "c737c634f1734be3",
+          "value_hash": "ebd79b08fed9967f",
           "certainty": "STATED",
           "provenance_hash": "052dd5d6939d416c"
         }
       ],
       "feasibility": "NOT_ASSESSED",
       "unknowns": [
-        "供應商是否接受此日期、地點、時間、規模與預算"
+        "供應商是否接受此案件"
       ],
       "conflicts": []
     },
     "authorized": false,
-    "decision_request_hash": "a5283444fd5b3ff2"
+    "decision_request_hash": "6b62ce5ede25da28"
   },
   "decision_continuation": {
     "decision_class": "accept",
@@ -150,18 +150,11 @@
           }
         ],
         "feasibility": "NOT_ASSESSED",
-        "unknowns": [
-          "年份",
-          "活動時間",
-          "菜單偏好",
-          "飲食需求",
-          "場地與設備條件",
-          "佈置與服務需求"
-        ],
+        "unknowns": [],
         "conflicts": []
       },
       "authorized": false,
-      "decision_request_hash": "7ab3252edd0fe4f4"
+      "decision_request_hash": "17af483238e944bc"
     }
   }
 }
