@@ -37,6 +37,11 @@ class LineBridge:
     def process(self, user_id, text, reply_token=None, event_id=None, deliver=True):
         cid=case_id(user_id); path=self.root/(cid+'.json'); sim=Simulator(path,False)
         response=sim.turn(text)
+        if sim.case.next_action=='ask':
+            inference=sim.case.events[-1].get('inference',{}) if sim.case.events else {}
+            unknowns=inference.get('unknowns',[])
+            if unknowns:
+                response='請問'+str(unknowns[0]).rstrip('？?')+'？'
         result={'event_id_hash':digest(event_id or secrets.token_hex(8)),'user_id_hash':digest(user_id),'case_id':cid,'next_action':sim.case.next_action,'lifecycle':sim.case.lifecycle,'reply_authorized':sim.case.next_action!='human_gate','outbound_status':'NOT_SENT'}
         if deliver and reply_token:
             if sim.case.next_action=='human_gate': result['outbound_status']='GATE_HOLD'
@@ -79,7 +84,8 @@ def main():
     if a.serve: webhook_server(LineBridge(a.state_dir),port=a.port).serve_forever()
     if not a.synthetic: raise SystemExit('Use --synthetic for bounded local test; live webhook requires LINE credentials and tunnel.')
     bridge=LineBridge(a.state_dir); user='synthetic-owner-line-user';
-    bridge.process(user,'10/20 中壢 約30人 歐式自助餐',deliver=False)
+    first,_=bridge.process(user,'10/20 中壢 約30人 歐式自助餐',deliver=False)
+    assert first.endswith('？') and first.count('？')==1
     bridge.process(user,'所以 10/20 你們能承作嗎？',deliver=False)
     hold=bridge.public_evidence(user); assert hold['state']['next_action']=='human_gate'
     _, decision_case=bridge.operator_decision(user,'accept','synthetic private reason','我們確認 10/20 可以承作。',deliver=False)
