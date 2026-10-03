@@ -41,7 +41,7 @@ class LineBridge:
     def __init__(self, state_dir=ROOT, transport=None):
         self.root=Path(state_dir); self.root.mkdir(parents=True,exist_ok=True); self.transport=transport or LineTransport()
     def process(self, user_id, text, reply_token=None, event_id=None, deliver=True):
-        cid=case_id(user_id); path=self.root/(cid+'.json'); sim=Simulator(path,False)
+        cid=case_id(user_id); path=self.root/(cid+'.json'); (self.root/(cid+'.route.json')).write_text(json.dumps({'user_id':user_id,'user_id_hash':digest(user_id)},ensure_ascii=False),encoding='utf-8'); sim=Simulator(path,False)
         response=sim.turn(text)
         if sim.case.next_action=='ask':
             inference=sim.case.events[-1].get('inference',{}) if sim.case.events else {}
@@ -50,14 +50,17 @@ class LineBridge:
                 response=render_unknown_question(unknowns[0])
         result={'event_id_hash':digest(event_id or secrets.token_hex(8)),'user_id_hash':digest(user_id),'case_id':cid,'next_action':sim.case.next_action,'lifecycle':sim.case.lifecycle,'reply_authorized':sim.case.next_action!='human_gate','outbound_status':'NOT_SENT'}
         if deliver and reply_token:
-            if sim.case.next_action=='human_gate': result['outbound_status']='GATE_HOLD'
+            if sim.case.next_action=='human_gate': result['outbound_status']='GATE_ACK_SENT'; result['gate_ack_status']=self.transport.reply(reply_token,response)
             else: result['outbound_status']='SENT'; result['transport_status']=self.transport.reply(reply_token,response)
         (self.root/(cid+'.evidence.json')).write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
         return response,result
     def operator_decision(self,user_id, decision, internal_reason, outward_response, deliver=True):
-        path=self.root/(case_id(user_id)+'.json'); sim=Simulator(path,False)
+        return self.operator_decision_case(case_id(user_id),decision,internal_reason,outward_response,deliver,user_id)
+    def operator_decision_case(self,cid, decision, internal_reason, outward_response, deliver=True, user_id=None):
+        path=self.root/(cid+'.json'); sim=Simulator(path,False)
         response=sim.decide(decision,internal_reason,outward_response)
-        if deliver: self.transport.push(user_id,response)
+        if deliver:
+            route=json.loads((self.root/(cid+'.route.json')).read_text(encoding='utf-8')); self.transport.push(user_id or route['user_id'],response)
         return response,sim
     def handle_webhook(self, payload, signature, deliver=True):
         raise RuntimeError('Use handle_raw_webhook with exact raw body bytes')
@@ -73,6 +76,12 @@ class LineBridge:
     def public_evidence(self,user_id):
         cid=case_id(user_id); sim=Simulator(self.root/(cid+'.json'),False)
         return {'case_id':cid,'state':sim.case.public(safe=True),'events':[({**{k:v for k,v in e.items() if k not in ('inference', 'state')},'state':sim.case.public(safe=True)} if 'state' in e else {k:v for k,v in e.items() if k not in ('inference',)}) for e in sim.case.events]}
+
+class FakeTransport:
+    secret='synthetic-secret'; token='synthetic-token'
+    def __init__(self): self.replies=[]; self.pushes=[]
+    def reply(self, token, text): self.replies.append((token,text)); return 200
+    def push(self, user, text): self.pushes.append((user,text)); return 200
 
 def webhook_server(bridge, host='127.0.0.1', port=8080):
     class Handler(BaseHTTPRequestHandler):
@@ -91,6 +100,9 @@ def main():
     if not a.synthetic: raise SystemExit('Use --synthetic for bounded local test; live webhook requires LINE credentials and tunnel.')
     bridge=LineBridge(a.state_dir); user='synthetic-owner-line-user';
     assert render_unknown_question('time')=='請問活動時間？'
+    fake_dir=Path(a.state_dir+'-gate-regression'); import shutil; shutil.rmtree(fake_dir,ignore_errors=True); ft=FakeTransport(); fb=LineBridge(fake_dir,ft)
+    fb.process('route-user','10/20 中壢 約30人 歐式自助餐',reply_token='reply-1',deliver=True); _,gate_receipt=fb.process('route-user','所以 10/20 你們能承作嗎？',reply_token='reply-2',deliver=True); assert gate_receipt['outbound_status']=='GATE_ACK_SENT' and len(ft.replies)==2
+    cid=case_id('route-user'); restarted=LineBridge(fake_dir,ft); assert json.loads((fake_dir/(cid+'.route.json')).read_text(encoding='utf-8'))['user_id']=='route-user'; restarted.operator_decision_case(cid,'accept','private','authorized',deliver=True); assert ft.pushes==[('route-user','authorized')]; shutil.rmtree(fake_dir,ignore_errors=True)
     first,_=bridge.process(user,'10/20 中壢 約30人 歐式自助餐',deliver=False)
     assert first.endswith('？') and first.count('？')==1
     bridge.process(user,'所以 10/20 你們能承作嗎？',deliver=False)
