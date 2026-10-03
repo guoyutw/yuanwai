@@ -13,6 +13,12 @@ ROOT=Path(os.environ.get('YUANWAI_LINE_STATE_DIR','line-state'))
 def digest(value): return hashlib.sha256(value.encode()).hexdigest()[:16]
 def case_id(user_id): return 'line-'+digest(user_id)
 
+def render_unknown_question(selected):
+    text=str(selected).strip()
+    if '?' in text or '？' in text: return text
+    labels={'date':'活動日期','time':'活動時間','location':'活動地點','headcount':'預計人數','service_form':'服務形式','budget':'預算範圍','menu_preferences':'菜單偏好','dietary':'飲食需求','setup_logistics':'場地與 setup 細節','invoice_admin':'發票或行政需求'}
+    return '請問'+labels.get(text,text)+'？'
+
 def verify_signature(body, signature, secret):
     expected=base64.b64encode(hmac.new(secret.encode(), body, hashlib.sha256).digest()).decode()
     return bool(signature) and hmac.compare_digest(expected, signature)
@@ -41,7 +47,7 @@ class LineBridge:
             inference=sim.case.events[-1].get('inference',{}) if sim.case.events else {}
             unknowns=inference.get('unknowns',[])
             if unknowns:
-                response='請問'+str(unknowns[0]).rstrip('？?')+'？'
+                response=render_unknown_question(unknowns[0])
         result={'event_id_hash':digest(event_id or secrets.token_hex(8)),'user_id_hash':digest(user_id),'case_id':cid,'next_action':sim.case.next_action,'lifecycle':sim.case.lifecycle,'reply_authorized':sim.case.next_action!='human_gate','outbound_status':'NOT_SENT'}
         if deliver and reply_token:
             if sim.case.next_action=='human_gate': result['outbound_status']='GATE_HOLD'
@@ -84,6 +90,7 @@ def main():
     if a.serve: webhook_server(LineBridge(a.state_dir),port=a.port).serve_forever()
     if not a.synthetic: raise SystemExit('Use --synthetic for bounded local test; live webhook requires LINE credentials and tunnel.')
     bridge=LineBridge(a.state_dir); user='synthetic-owner-line-user';
+    assert render_unknown_question('time')=='請問活動時間？'
     first,_=bridge.process(user,'10/20 中壢 約30人 歐式自助餐',deliver=False)
     assert first.endswith('？') and first.count('？')==1
     bridge.process(user,'所以 10/20 你們能承作嗎？',deliver=False)
