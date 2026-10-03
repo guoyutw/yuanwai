@@ -37,7 +37,12 @@ class AIInference:
    prompt='Return JSON only with exact schema: {facts:[{topic:string,value:string,value_class:string}],commitment_request:boolean,conflict:boolean,reference:boolean,supplier_ready:boolean,requires_human_gate:boolean,decision_type:string,decision_request:string,unknowns:[string],conflicts:[string],primary_next_action:string,guardrail:string}. decision_type/request/unknowns/conflicts must describe only this current turn/case; use empty strings/lists when not applicable. Allowed decision_type: availability, acceptance, quote, price, payment, exception, fulfillment. Allowed normalized fact topics: date, location, headcount, service_form, time, budget, menu_preferences, dietary, setup_logistics, invoice_admin. Preserve each distinct fact and its actual value; never return prose facts or alternate keys. Set requires_human_gate=true ONLY when this current customer message asks for availability/acceptance/quote/exception/payment/fulfillment or explicitly requires supplier authority; ordinary qualification facts must set it false. Frozen rules: date is not availability; feasibility is not acceptance; references are not promises; changed/contradictory facts recover; supplier authority is human-gated. Current case state='+json.dumps(case.internal(),ensure_ascii=False)+' Synthetic customer message='+text
    r=subprocess.run(['hermes','-p',profile,'-z',prompt],capture_output=True,text=True,timeout=120,check=True)
    out=json.loads(r.stdout)
-   return self.normalize(json.loads(r.stdout))
+   try: return self.normalize(out)
+   except RuntimeError as exc:
+    if 'ask target' not in str(exc): raise
+    retry_prompt=prompt+' CORRECTION: primary_next_action=ask requires unknowns to be a non-empty ordered list of exactly one or more normalized topics selected from the current case; do not return an empty list.'
+    rr=subprocess.run(['hermes','-p',profile,'-z',retry_prompt],capture_output=True,text=True,timeout=120,check=True)
+    return self.normalize(json.loads(rr.stdout))
   prompt={'message':text,'current_state':case.public(),'instruction':'Return JSON only: facts array or object, commitment_request boolean, conflict boolean, reference boolean, supplier_ready boolean, primary_next_action string. Never invent supplier commitments.'}
   req=urllib.request.Request(endpoint,data=json.dumps({'model':os.environ.get('YUANWAI_AI_MODEL','local'),'messages':[{'role':'user','content':json.dumps(prompt,ensure_ascii=False)}],'temperature':0}).encode(),headers={'Content-Type':'application/json'})
   with urllib.request.urlopen(req,timeout=30) as r: return self.normalize(json.loads(json.load(r)['choices'][0]['message']['content']))
@@ -58,6 +63,8 @@ class AIInference:
   if not isinstance(out['decision_type'],str) or not isinstance(out['decision_request'],str) or not isinstance(out['unknowns'],list) or not isinstance(out['conflicts'],list): raise RuntimeError('AI decision metadata malformed')
   if out['decision_type'] and out['decision_type'] not in {'availability','acceptance','quote','price','payment','exception','fulfillment'}: raise RuntimeError('AI decision type invalid')
   action=str(out.get('primary_next_action',''))
+  allowed_unknowns={'date','time','location','headcount','service_form','budget','menu_preferences','dietary','setup_logistics','invoice_admin'}
+  if action.startswith('ask') and (not out['unknowns'] or any((str(x) not in allowed_unknowns and not re.search('[\u4e00-\u9fff]',str(x))) for x in out['unknowns'])): raise RuntimeError('AI ask target missing: ask action requires ordered normalized unknowns or a natural-language target')
   return {'facts':stable,'commitment_request':out['commitment_request'],'conflict':out['conflict'],'reference':out['reference'],'supplier_ready':out['supplier_ready'],'primary_next_action':action,'model_requires_human_gate':out['requires_human_gate'],'guardrail':out.get('guardrail'),'decision_type':out['decision_type'],'decision_request':out['decision_request'],'unknowns':out['unknowns'],'conflicts':out['conflicts']}
  def fixture_infer(self,text):
   pats={'date':r'\d{1,2}[月/]\d{1,2}日?','headcount':r'\d+\s*(?:人|位|份)','location':r'台北|新竹|台中|高雄|桃園|到府','service_form':r'外燴|餐盒|自助餐|buffet|桌菜'}; facts=[]
