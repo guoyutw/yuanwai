@@ -26,12 +26,11 @@ This remains a candidate direction under experiment, not a canonical final busin
 - [Historical State Delta review](records/evidence-state-delta-yuanwai-review-2026-10-01.md) — public-safe synthesis of Yuanwai-relevant owner evidence that had not all been reflected in the repository.
 - [Two-sided catering friction review](records/evidence-two-sided-catering-friction-review-2026-10-01.md) — supporting evidence on customer/vendor friction; does not change the experiment boundary.
 
-# Issue #74 exact candidate; remains open pending independent review.
+# Issue #74 review-ready candidate; remains open pending independent review.
 
-- Candidate: `cdcd3b98f8359c0904c8647c5e18bcc32d7a90e3`
+- Candidate: current `main` HEAD (Issue #74 review-ready candidate)
 - Issue #74: OPEN — waiting for independent `/review 74`
-- B9/B10: human gate decision request, actual unknowns/conflicts, separated supplier decision fields, fail-closed missing outward response, and customer continuation implemented and verified.
-- B11: this candidate supersedes the prior stale pointer.
+- B12/B13/B14: explicit case unknowns/conflicts, model-bounded gate decision types/requests, and truthful public evidence are implemented and verified.
 - Next action: independent final review. No LINE integration until review PASS.
 
 - [State / AI Operating Contract 0.1](records/contract-state-ai-operating-0.1.md) — frozen owner contract for lifecycle, provenance, gating, supplier-ready, recovery, mediation, and public-safe logging.

@@ -15,6 +15,7 @@ class Case:
   if not self.gate: g=None
   else:
    g={k:v for k,v in self.gate.items() if k not in ('customer_response','internal_reason','authorized_customer_response')}
+   if safe and 'decision_request' in g: g['decision_request_hash']=h(str(g.pop('decision_request')))
    if safe and 'authorized_customer_response' in self.gate: g['authorized_response_hash']=h(str(self.gate['authorized_customer_response']))
    if safe and isinstance(g.get('brief'),dict):
     b=dict(g['brief']); b['facts']=[{'topic':f['topic'],'value_hash':h(str(f['value'])),'certainty':f['certainty'],'provenance_hash':f['provenance_hash']} for f in b.get('facts',[])]
@@ -32,7 +33,7 @@ class AIInference:
   if not endpoint:
    profile=os.environ.get('YUANWAI_HERMES_PROFILE')
    if not profile: raise RuntimeError('AI inference unavailable; set YUANWAI_HERMES_PROFILE or YUANWAI_AI_ENDPOINT')
-   prompt='Return JSON only with exact schema: {facts:[{topic:string,value:string,value_class:string}],commitment_request:boolean,conflict:boolean,reference:boolean,supplier_ready:boolean,requires_human_gate:boolean,primary_next_action:string,guardrail:string}. Allowed normalized fact topics: date, location, headcount, service_form, time, budget, menu_preferences, dietary, setup_logistics, invoice_admin. Preserve each distinct fact and its actual value; never return prose facts or alternate keys. Set requires_human_gate=true ONLY when this current customer message asks for availability/acceptance/quote/exception/payment/fulfillment or explicitly requires supplier authority; ordinary qualification facts must set it false. Frozen rules: date is not availability; feasibility is not acceptance; references are not promises; changed/contradictory facts recover; supplier authority is human-gated. Current case state='+json.dumps(case.internal(),ensure_ascii=False)+' Synthetic customer message='+text
+   prompt='Return JSON only with exact schema: {facts:[{topic:string,value:string,value_class:string}],commitment_request:boolean,conflict:boolean,reference:boolean,supplier_ready:boolean,requires_human_gate:boolean,decision_type:string,decision_request:string,unknowns:[string],conflicts:[string],primary_next_action:string,guardrail:string}. decision_type/request/unknowns/conflicts must describe only this current turn/case; use empty strings/lists when not applicable. Allowed decision_type: availability, acceptance, quote, price, payment, exception, fulfillment. Allowed normalized fact topics: date, location, headcount, service_form, time, budget, menu_preferences, dietary, setup_logistics, invoice_admin. Preserve each distinct fact and its actual value; never return prose facts or alternate keys. Set requires_human_gate=true ONLY when this current customer message asks for availability/acceptance/quote/exception/payment/fulfillment or explicitly requires supplier authority; ordinary qualification facts must set it false. Frozen rules: date is not availability; feasibility is not acceptance; references are not promises; changed/contradictory facts recover; supplier authority is human-gated. Current case state='+json.dumps(case.internal(),ensure_ascii=False)+' Synthetic customer message='+text
    r=subprocess.run(['hermes','-p',profile,'-z',prompt],capture_output=True,text=True,timeout=120,check=True)
    out=json.loads(r.stdout)
    return self.normalize(json.loads(r.stdout))
@@ -50,11 +51,13 @@ class AIInference:
    topic=aliases.get(str(x['topic']))
    if not topic: raise RuntimeError('AI fact topic unnormalizable: '+str(x['topic']))
    stable.append({'topic':topic,'value_class':str(x['value_class']),'value':str(x['value'])})
-  required={'commitment_request','conflict','reference','supplier_ready','requires_human_gate'}
+  required={'commitment_request','conflict','reference','supplier_ready','requires_human_gate','decision_type','decision_request','unknowns','conflicts'}
   if not required.issubset(out): raise RuntimeError('AI structured authority fields missing')
-  if not all(isinstance(out[k],bool) for k in required): raise RuntimeError('AI authority fields must be boolean')
+  if not all(isinstance(out[k],bool) for k in {'commitment_request','conflict','reference','supplier_ready','requires_human_gate'}): raise RuntimeError('AI authority fields must be boolean')
+  if not isinstance(out['decision_type'],str) or not isinstance(out['decision_request'],str) or not isinstance(out['unknowns'],list) or not isinstance(out['conflicts'],list): raise RuntimeError('AI decision metadata malformed')
+  if out['decision_type'] and out['decision_type'] not in {'availability','acceptance','quote','price','payment','exception','fulfillment'}: raise RuntimeError('AI decision type invalid')
   action=str(out.get('primary_next_action',''))
-  return {'facts':stable,'commitment_request':out['commitment_request'],'conflict':out['conflict'],'reference':out['reference'],'supplier_ready':out['supplier_ready'],'primary_next_action':action,'model_requires_human_gate':out['requires_human_gate'],'guardrail':out.get('guardrail')}
+  return {'facts':stable,'commitment_request':out['commitment_request'],'conflict':out['conflict'],'reference':out['reference'],'supplier_ready':out['supplier_ready'],'primary_next_action':action,'model_requires_human_gate':out['requires_human_gate'],'guardrail':out.get('guardrail'),'decision_type':out['decision_type'],'decision_request':out['decision_request'],'unknowns':out['unknowns'],'conflicts':out['conflicts']}
  def fixture_infer(self,text):
   pats={'date':r'\d{1,2}[月/]\d{1,2}日?','headcount':r'\d+\s*(?:人|位|份)','location':r'台北|新竹|台中|高雄|桃園|到府','service_form':r'外燴|餐盒|自助餐|buffet|桌菜'}; facts=[]
   for t,p in pats.items():
@@ -68,8 +71,7 @@ class Simulator:
   if self.path: self.path.parent.mkdir(parents=True,exist_ok=True); self.path.write_text(json.dumps({'case':self.case.public(),'events':self.case.events},ensure_ascii=False,indent=2),encoding='utf-8')
  def brief(self):
   facts=[{'topic':f.topic,'value':f.value or f.value_class,'certainty':f.certainty,'provenance_hash':f.provenance_hash} for f in self.case.facts if f.status=='CURRENT']
-  known={f['topic'] for f in facts}; unknowns=[x for x in ('date','time','location','headcount','service_form','budget') if x not in known]
-  return {'facts':facts,'feasibility':self.case.feasibility,'unknowns':unknowns,'conflicts':[]}
+  known={f['topic'] for f in facts}; return {'facts':facts,'feasibility':self.case.feasibility,'unknowns':[],'conflicts':[]}
  def turn(self,text):
   p=self.ai.interpret(text,self.case); changed=False; ev={'ts':now(),'type':'customer_turn','text_redacted':True,'text_hash':h(text),'topics':[],'inference':p}
   for x in p.get('facts',[]):
@@ -87,7 +89,8 @@ class Simulator:
   elif p.get('conflict') and p.get('facts'): self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有衝突或變更，先不沿用舊結論，請確認目前有效內容。'
   elif p.get('commitment_request') or p.get('model_requires_human_gate'):
    self.case.lifecycle='HUMAN_GATE_PENDING'; self.case.next_action='human_gate'; req='請供應方確認本案是否可承作（availability/acceptance），不得由 AI 自行承諾。'
-   self.case.gate={'reason':'supplier authority required','decision_type':'availability/acceptance','decision_request':req,'brief':self.brief(),'authorized':False}; response='這需要供應方確認，我不能自行承諾；已整理 supplier-ready brief。'
+   dtype=p.get('decision_type') or 'authority'; req=p.get('decision_request') or '請供應方針對本輪要求提供明確決定。'; brief=self.brief(); brief['unknowns']=p.get('unknowns',[]); brief['conflicts']=p.get('conflicts',[])
+   self.case.gate={'reason':'supplier authority required','decision_type':dtype,'decision_request':req,'brief':brief,'authorized':False}; response='這需要供應方確認，我不能自行承諾；已整理 supplier-ready brief。'
   elif p.get('reference'): self.case.lifecycle='OPTIONS'; self.case.next_action='reference'; response='可提供標示為歷史參考的範例，不代表本次菜單、價格或可用性。'
   elif p.get('supplier_ready'): self.case.lifecycle='SUPPLIER_READY'; self.case.next_action='human_gate'; self.case.gate={'reason':'AI assessed decision readiness','decision_type':'supplier authority decision','brief':self.brief(),'authorized':False}; response='已達可供供應方判斷的程度，尚不代表接單。'
   else: self.case.lifecycle='UNDERSTANDING'; self.case.next_action='ask'; response='我先保留目前資訊；請提供下一個你認為重要的需求細節。'

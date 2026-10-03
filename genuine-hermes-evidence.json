@@ -4,7 +4,7 @@
   "profile_class": "isolated dev/test profile",
   "profile": "yuanwai74",
   "inference_turns": 5,
-  "structured_result_consumed": false,
+  "structured_result_consumed": true,
   "trace": [
     {
       "type": "customer_turn",
@@ -57,8 +57,7 @@
   ],
   "gate_brief_public": {
     "reason": "supplier authority required",
-    "decision_type": "availability/acceptance",
-    "decision_request": "請供應方確認本案是否可承作（availability/acceptance），不得由 AI 自行承諾。",
+    "decision_type": "acceptance",
     "brief": {
       "facts": [
         {
@@ -93,16 +92,19 @@
         },
         {
           "topic": "budget",
-          "value_hash": "ebd79b08fed9967f",
+          "value_hash": "c737c634f1734be3",
           "certainty": "STATED",
           "provenance_hash": "052dd5d6939d416c"
         }
       ],
       "feasibility": "NOT_ASSESSED",
-      "unknowns": [],
+      "unknowns": [
+        "供應商是否接受此日期、地點、時間、規模與預算"
+      ],
       "conflicts": []
     },
-    "authorized": false
+    "authorized": false,
+    "decision_request_hash": "a5283444fd5b3ff2"
   },
   "decision_continuation": {
     "decision_class": "accept",
@@ -113,5 +115,53 @@
   },
   "final_next_action": "answer",
   "provider_model_product_decision": false,
-  "raw_customer_text_persisted": false
+  "raw_customer_text_persisted": false,
+  "price_quote_gate": {
+    "decision_type": "quote",
+    "decision_request_redacted": true,
+    "public": {
+      "reason": "supplier authority required",
+      "decision_type": "quote",
+      "brief": {
+        "facts": [
+          {
+            "topic": "date",
+            "value_hash": "b3bee13719ec9d9c",
+            "certainty": "STATED",
+            "provenance_hash": "fccf18e4d5d20305"
+          },
+          {
+            "topic": "location",
+            "value_hash": "cf11592ff2e011f7",
+            "certainty": "STATED",
+            "provenance_hash": "a2456840e7955c39"
+          },
+          {
+            "topic": "headcount",
+            "value_hash": "f10c48f868c3c87f",
+            "certainty": "STATED",
+            "provenance_hash": "0561bf334ac107b6"
+          },
+          {
+            "topic": "service_form",
+            "value_hash": "900c4109781b447f",
+            "certainty": "STATED",
+            "provenance_hash": "7e3d6af3602caac5"
+          }
+        ],
+        "feasibility": "NOT_ASSESSED",
+        "unknowns": [
+          "年份",
+          "活動時間",
+          "菜單偏好",
+          "飲食需求",
+          "場地與設備條件",
+          "佈置與服務需求"
+        ],
+        "conflicts": []
+      },
+      "authorized": false,
+      "decision_request_hash": "7ab3252edd0fe4f4"
+    }
+  }
 }
