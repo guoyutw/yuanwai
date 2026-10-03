@@ -26,15 +26,15 @@ This remains a candidate direction under experiment, not a canonical final busin
 - [Historical State Delta review](records/evidence-state-delta-yuanwai-review-2026-10-01.md) — public-safe synthesis of Yuanwai-relevant owner evidence that had not all been reflected in the repository.
 - [Two-sided catering friction review](records/evidence-two-sided-catering-friction-review-2026-10-01.md) — supporting evidence on customer/vendor friction; does not change the experiment boundary.
 
-# Issue #74 review-ready candidate; remains open pending independent review.
+# Issue #74 offline AI simulator — independently reviewed PASS.
 
-- Candidate: current `main` HEAD (Issue #74 review-ready candidate)
-- Issue #74: OPEN — waiting for independent `/review 74`
-- B12/B13/B14: explicit case unknowns/conflicts, model-bounded gate decision types/requests, and truthful public evidence are implemented and verified.
-- Next action: independent final review. No LINE integration until review PASS.
+- Implementation candidate: `b6646bc06fc312ae95e438fb13c61075194606a1` (later state-only writeback does not change simulator behavior).
+- Issue #74: FINAL SPEC REVIEW — PASS / CLOSED.
+- Validated boundary: genuine replaceable AI inference, progressive qualification without a universal questionnaire, bounded human gates, contradiction/change recovery, private supplier decision handling, restart/replay, and public-safe evidence.
+- Next action: define/freeze the separate synthetic LINE E2E issue described by Issue #74. Do not start LINE implementation until that separate issue is created/frozen.
 
-- [State / AI Operating Contract 0.1](records/contract-state-ai-operating-0.1.md) — frozen owner contract for lifecycle, provenance, gating, supplier-ready, recovery, mediation, and public-safe logging.
+- [State / AI Operating Contract 0.1](records/contract-state-ai-operating-0.1.md) — frozen owner contract for lifecycle, provenance, gating, supplier-ready, recovery, mediation, acceptance scenarios, and public-safe logging.
 
 ## CLEAR CONDITION
 
-The contract is frozen and traceable to current authority and owner decisions. Its state, authority, gating, supplier-ready, recovery, mediation, acceptance scenarios, and explicit PROVISIONAL unknowns are sufficient to write the next bounded implementation/simulation issue without guessing domain field roles or converting conditional historical patterns into universal requirements.
+Issue #74 has independently validated the smallest offline AI simulator against the frozen contract. The gate for a separate synthetic LINE E2E issue is now met; that future issue must remain bounded to connecting the validated AI layer to the already-proven LINE transport and must not silently expand product scope.
