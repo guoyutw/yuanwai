@@ -19,7 +19,7 @@ class Case:
    if safe and 'authorized_customer_response' in self.gate: g['authorized_response_hash']=h(str(self.gate['authorized_customer_response']))
    if safe and isinstance(g.get('brief'),dict):
     b=dict(g['brief']); b['facts']=[{'topic':f['topic'],'value_hash':h(str(f['value'])),'certainty':f['certainty'],'provenance_hash':f['provenance_hash']} for f in b.get('facts',[])]
-    g['brief']=b
+    b['unknown_hashes']=[h(str(x)) for x in b.get('unknowns',[])]; b['conflict_hashes']=[h(str(x)) for x in b.get('conflicts',[])]; b.pop('unknowns',None); b.pop('conflicts',None); g['brief']=b
   facts=[asdict(x) for x in self.facts if x.status in ('CURRENT','SUPERSEDED','CONTRADICTED','REJECTED')]
   if safe: facts=[{k:v for k,v in f.items() if k not in ('value','value_class')}|{'value_hash':h(str(f['value']))} for f in facts]
   return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':facts,'feasibility':self.feasibility,'next_action':self.next_action,'gate':g}
