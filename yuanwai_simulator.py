@@ -39,8 +39,8 @@ class AIInference:
    out=json.loads(r.stdout)
    try: return self.normalize(out)
    except RuntimeError as exc:
-    if 'ask target' not in str(exc): raise
-    retry_prompt=prompt+' CORRECTION: primary_next_action=ask requires unknowns to be a non-empty ordered list of exactly one or more normalized topics selected from the current case; do not return an empty list.'
+    if not any(x in str(exc) for x in ('ask target','action vocabulary')): raise
+    retry_prompt=prompt+' CORRECTION: primary_next_action must be exactly one of answer, reference, ask, human_gate, recovery. If ask, unknowns must be a non-empty ordered list of normalized topics selected from the current case.'
     rr=subprocess.run(['hermes','-p',profile,'-z',retry_prompt],capture_output=True,text=True,timeout=120,check=True)
     return self.normalize(json.loads(rr.stdout))
   prompt={'message':text,'current_state':case.public(),'instruction':'Return JSON only: facts array or object, commitment_request boolean, conflict boolean, reference boolean, supplier_ready boolean, primary_next_action string. Never invent supplier commitments.'}
@@ -64,7 +64,9 @@ class AIInference:
   if out['decision_type'] and out['decision_type'] not in {'availability','acceptance','quote','price','payment','exception','fulfillment'}: raise RuntimeError('AI decision type invalid')
   action=str(out.get('primary_next_action',''))
   allowed_unknowns={'date','time','location','headcount','service_form','budget','menu_preferences','dietary','setup_logistics','invoice_admin'}
-  if action.startswith('ask') and (not out['unknowns'] or any((str(x) not in allowed_unknowns and not re.search('[\u4e00-\u9fff]',str(x))) for x in out['unknowns'])): raise RuntimeError('AI ask target missing: ask action requires ordered normalized unknowns or a natural-language target')
+  if action.startswith('ask'): action='ask'
+  if action not in {'answer','reference','ask','human_gate','recovery'}: raise RuntimeError('AI action vocabulary invalid')
+  if action=='ask' and (not out['unknowns'] or any((str(x) not in allowed_unknowns and not re.search('[\u4e00-\u9fff]',str(x))) for x in out['unknowns'])): raise RuntimeError('AI ask target missing: ask action requires ordered normalized unknowns or a natural-language target')
   return {'facts':stable,'commitment_request':out['commitment_request'],'conflict':out['conflict'],'reference':out['reference'],'supplier_ready':out['supplier_ready'],'primary_next_action':action,'model_requires_human_gate':out['requires_human_gate'],'guardrail':out.get('guardrail'),'decision_type':out['decision_type'],'decision_request':out['decision_request'],'unknowns':out['unknowns'],'conflicts':out['conflicts']}
  def fixture_infer(self,text):
   pats={'date':r'\d{1,2}[月/]\d{1,2}日?','headcount':r'\d+\s*(?:人|位|份)','location':r'台北|新竹|台中|高雄|桃園|到府','service_form':r'外燴|餐盒|自助餐|buffet|桌菜'}; facts=[]
@@ -81,7 +83,7 @@ class Simulator:
   facts=[{'topic':f.topic,'value':f.value or f.value_class,'certainty':f.certainty,'provenance_hash':f.provenance_hash} for f in self.case.facts if f.status=='CURRENT']
   known={f['topic'] for f in facts}; return {'facts':facts,'feasibility':self.case.feasibility,'unknowns':[],'conflicts':[]}
  def turn(self,text):
-  p=self.ai.interpret(text,self.case); changed=False; ev={'ts':now(),'type':'customer_turn','text_redacted':True,'text_hash':h(text),'topics':[],'inference':p}
+  prior_gate=dict(self.case.gate) if self.case.gate else None; p=self.ai.interpret(text,self.case); changed=False; ev={'ts':now(),'type':'customer_turn','text_redacted':True,'text_hash':h(text),'topics':[],'inference':p}
   candidates=[f for f in self.case.facts if f.status=='CONTRADICTED']
   ordinal=re.search('前一個|第一個|之前那個|第一筆|後一個|第二個|後一筆|第二筆',text)
   if candidates and ordinal:
@@ -103,12 +105,17 @@ class Simulator:
     for f in old: f.status='SUPERSEDED'
     self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; self.case.gate=None; self.case.next_action='recovery'; ev['invalidation']={'dependent_state':['feasibility','supplier_ready_brief','pending_supplier_decision'],'superseded_fact_ids':[f.event_id for f in old]}
    if not conflict_added and (not old or (old[-1].value or old[-1].value_class) != new_value):
+    if prior_gate and prior_gate.get('authorized'): changed=True
     certainty={'customer_stated':'STATED','stated':'STATED','customer_confirmed':'CONFIRMED_BY_CUSTOMER','confirmed':'CONFIRMED_BY_CUSTOMER','inferred':'INFERRED','reference_only':'REFERENCE_ONLY','unknown':'UNKNOWN'}.get(str(x['value_class']).lower(),'STATED')
     self.case.facts.append(Fact(x['topic'],x['value_class'],h(text),certainty,event_id=uuid.uuid4().hex[:8],value=new_value,provenance_hash=h(text+'|'+x['topic'])))
    ev['topics'].append(x['topic'])
   if changed and p.get('conflict'):
    self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='ask'; response='資料有衝突，保留兩個候選值，請確認哪一個才是目前有效內容。'
-  elif changed: self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有衝突或變更，先不沿用舊結論，請確認目前有效內容。'
+  elif changed:
+   if prior_gate and prior_gate.get('authorized'):
+    ev['decision_invalidation']={'decision_class':prior_gate.get('decision_class'),'authorized_response_hash':h(str(prior_gate.get('authorized_customer_response',''))),'reason':'decision-affecting fact changed'}
+    self.case.lifecycle='HUMAN_GATE_PENDING'; self.case.next_action='human_gate'; self.case.gate={'reason':'decision-affecting fact changed; reconfirmation required','decision_type':prior_gate.get('decision_type','authority'),'decision_request':'新資訊已加入，請供應方重新確認本案是否可承作。','brief':self.brief(),'authorized':False,'superseded_decision_class':prior_gate.get('decision_class')}; response='收到新的時間資訊；原供應方確認已失效，需要重新確認後我才能回覆您。'
+   else: self.case.lifecycle='CHANGED/RECOVERY'; self.case.next_action='recovery'; response='資料有衝突或變更，先不沿用舊結論，請確認目前有效內容。'
   elif p.get('commitment_request') or p.get('model_requires_human_gate'):
    self.case.lifecycle='HUMAN_GATE_PENDING'; self.case.next_action='human_gate'; req='請供應方確認本案是否可承作（availability/acceptance），不得由 AI 自行承諾。'
    dtype=p.get('decision_type') or 'authority'; req=p.get('decision_request') or '請供應方針對本輪要求提供明確決定。'; brief=self.brief(); brief['unknowns']=p.get('unknowns',[]); brief['conflicts']=p.get('conflicts',[])
