@@ -76,10 +76,12 @@ class Simulator:
  def turn(self,text):
   p=self.ai.interpret(text,self.case); changed=False; ev={'ts':now(),'type':'customer_turn','text_redacted':True,'text_hash':h(text),'topics':[],'inference':p}
   candidates=[f for f in self.case.facts if f.status=='CONTRADICTED']
-  if candidates and not p.get('facts') and re.search('前一個|第一個|之前那個|第一筆',text):
-   chosen=candidates[0]
+  ordinal=re.search('前一個|第一個|之前那個|第一筆|後一個|第二個|後一筆|第二筆',text)
+  if candidates and ordinal:
+   chosen=candidates[0] if ordinal.group(0) in ('前一個','第一個','之前那個','第一筆') else (candidates[1] if len(candidates)>1 else candidates[0])
    chosen.status='CURRENT'
-   for f in candidates[1:]: f.status='REJECTED'
+   for f in candidates:
+    if f is not chosen: f.status='REJECTED'
    self.case.lifecycle='UNDERSTANDING'; self.case.feasibility='NOT_ASSESSED'; self.case.next_action='ask'; ev['clarification']={'selected_event_id':chosen.event_id,'selected_provenance_hash':chosen.provenance_hash}; ev.update({'state':self.case.public(),'guardrail':'PASS','response_class':'safe_template'}); self.save(ev); return '收到，先以第一個日期為目前版本；如果不是，請再告訴我。'
   for x in p.get('facts',[]):
    conflict_added=False
