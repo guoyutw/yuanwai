@@ -1,0 +1,15 @@
+{
+  "issue": 75,
+  "fixture": false,
+  "case_id_hash": "line-3927bd6a08d97ca9",
+  "pre_reconfirmation": "HUMAN_GATE_PENDING",
+  "decision_invalidation": "decision-affecting time required reconfirmation",
+  "authorized_push_status": 200,
+  "post_restart_lifecycle": "CUSTOMER_CONTINUATION",
+  "post_restart_next_action": "answer",
+  "gate_authorized": true,
+  "public_safe": true,
+  "raw_customer_text": false,
+  "raw_user_id": false,
+  "private_reason": false
+}
