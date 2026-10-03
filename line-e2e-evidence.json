@@ -1,0 +1,10 @@
+{
+  "fixture": false,
+  "synthetic": true,
+  "case_id": "line-250475ff28a94fd9",
+  "same_case": true,
+  "gate_hold": true,
+  "authorized_continuation": true,
+  "public_safe": true,
+  "outbound_authorized_response_hash": "a90a768cdacd4305"
+}
