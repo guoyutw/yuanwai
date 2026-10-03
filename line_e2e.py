@@ -58,9 +58,15 @@ class LineBridge:
         return self.operator_decision_case(case_id(user_id),decision,internal_reason,outward_response,deliver,user_id)
     def operator_decision_case(self,cid, decision, internal_reason, outward_response, deliver=True, user_id=None):
         path=self.root/(cid+'.json'); sim=Simulator(path,False)
-        response=sim.decide(decision,internal_reason,outward_response)
+        if sim.case.gate and sim.case.gate.get('delivery_pending') and sim.case.gate.get('authorized_customer_response'):
+            response=sim.case.gate['authorized_customer_response']
+        else: response=sim.decide(decision,internal_reason,outward_response)
         if deliver:
-            route=json.loads((self.root/(cid+'.route.json')).read_text(encoding='utf-8')); self.transport.push(user_id or route['user_id'],response)
+            route=json.loads((self.root/(cid+'.route.json')).read_text(encoding='utf-8'))
+            try: self.transport.push(user_id or route['user_id'],response)
+            except Exception as exc:
+                sim=Simulator(path,False); sim.case.lifecycle='HUMAN_GATE_PENDING'; sim.case.next_action='human_gate'; sim.case.gate.update({'delivery_pending':True,'delivery_status':'FAILED','delivery_error_class':type(exc).__name__}); sim.save({'ts':'delivery-failed','type':'authorized_delivery','status':'FAILED','error_class':type(exc).__name__}); raise
+            sim=Simulator(path,False); sim.case.lifecycle='CUSTOMER_CONTINUATION'; sim.case.next_action='answer'; sim.case.gate.update({'delivery_pending':False,'delivery_status':'DELIVERED'}); sim.save({'ts':'delivery-success','type':'authorized_delivery','status':'DELIVERED'}); return response,sim
         return response,sim
     def handle_webhook(self, payload, signature, deliver=True):
         raise RuntimeError('Use handle_raw_webhook with exact raw body bytes')
@@ -95,8 +101,11 @@ def webhook_server(bridge, host='127.0.0.1', port=8080):
     return HTTPServer((host,port),Handler)
 
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument('--synthetic',action='store_true'); ap.add_argument('--serve',action='store_true'); ap.add_argument('--port',type=int,default=8080); ap.add_argument('--state-dir',default=str(ROOT)); a=ap.parse_args()
+    ap=argparse.ArgumentParser(); ap.add_argument('--synthetic',action='store_true'); ap.add_argument('--serve',action='store_true'); ap.add_argument('--operator-case'); ap.add_argument('--port',type=int,default=8080); ap.add_argument('--state-dir',default=str(ROOT)); a=ap.parse_args()
     if a.serve: webhook_server(LineBridge(a.state_dir),port=a.port).serve_forever()
+    if a.operator_case:
+        bridge=LineBridge(a.state_dir); decision=input('decision class> '); reason=input('private internal reason> '); outward=input('authorized outward response> ')
+        response,_=bridge.operator_decision_case(a.operator_case,decision,reason,outward,deliver=True); print(json.dumps({'case_id':a.operator_case,'delivery':'requested','response_hash':digest(response)},ensure_ascii=False)); return
     if not a.synthetic: raise SystemExit('Use --synthetic for bounded local test; live webhook requires LINE credentials and tunnel.')
     bridge=LineBridge(a.state_dir); user='synthetic-owner-line-user';
     assert render_unknown_question('time')=='請問活動時間？'

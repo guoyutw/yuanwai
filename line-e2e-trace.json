@@ -1,0 +1,19 @@
+{
+  "issue": 75,
+  "status": "PASS",
+  "scope": "synthetic LINE E2E only",
+  "ordered_trace": [
+    {"order":1,"message_id_hash":"synthetic-01","stage":"inbound","state":"UNDERSTANDING","next_action":"ask"},
+    {"order":2,"message_id_hash":"synthetic-02","stage":"inbound","state":"HUMAN_GATE_PENDING","next_action":"human_gate"},
+    {"order":3,"event_id_hash":"gate-ack","stage":"gate_ack","delivery":"reply_token_ack","status":"PASS"},
+    {"order":4,"event_id_hash":"decision-boundary","stage":"human_decision","decision_class":"accept","private_fields":"redacted","status":"RECORDED"},
+    {"order":5,"event_id_hash":"push-reconfirmation","stage":"authorized_delivery","delivery":"LINE push","http_status":200,"status":"PASS"},
+    {"order":6,"event_id_hash":"restart-readback","stage":"restart_continuation","state":"CUSTOMER_CONTINUATION","next_action":"answer","status":"PASS"}
+  ],
+  "case_identity":"hashed-only",
+  "raw_customer_text":false,
+  "raw_user_id":false,
+  "private_reason":false,
+  "credentials":false,
+  "overall_pass":true
+}

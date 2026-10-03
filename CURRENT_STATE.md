@@ -26,12 +26,12 @@ This remains a candidate direction under experiment, not a canonical final busin
 - [Historical State Delta review](records/evidence-state-delta-yuanwai-review-2026-10-01.md) — public-safe synthesis of Yuanwai-relevant owner evidence that had not all been reflected in the repository.
 - [Two-sided catering friction review](records/evidence-two-sided-catering-friction-review-2026-10-01.md) — supporting evidence on customer/vendor friction; does not change the experiment boundary.
 
-# Issue #74 offline AI simulator — independently reviewed PASS.
+# Issue #75 synthetic LINE E2E — implementation complete, pending independent review.
 
-- Implementation candidate: `b6646bc06fc312ae95e438fb13c61075194606a1` (later state-only writeback does not change simulator behavior).
-- Issue #74: FINAL SPEC REVIEW — PASS / CLOSED.
-- Validated boundary: genuine replaceable AI inference, progressive qualification without a universal questionnaire, bounded human gates, contradiction/change recovery, private supplier decision handling, restart/replay, and public-safe evidence.
-- Next action: define/freeze the separate synthetic LINE E2E issue described by Issue #74. Do not start LINE implementation until that separate issue is created/frozen.
+- Candidate: current `main` HEAD; Issue #75 remains OPEN.
+- Live synthetic flow verified: LINE transport → reviewed Issue #74 AI/state → stable case persistence → human gate → authorized push → restart continuation.
+- Public-safe trace: `line-e2e-trace.json`; no raw customer text, user ID, private reason, or credentials.
+- Next action: independent `/review 75`. No production hosting, database migration, second OA, marketplace, or real-customer rollout.
 
 - [State / AI Operating Contract 0.1](records/contract-state-ai-operating-0.1.md) — frozen owner contract for lifecycle, provenance, gating, supplier-ready, recovery, mediation, acceptance scenarios, and public-safe logging.
 
