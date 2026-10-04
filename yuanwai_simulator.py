@@ -39,8 +39,8 @@ class AIInference:
    out=json.loads(r.stdout)
    try: return self.normalize(out)
    except RuntimeError as exc:
-    if not any(x in str(exc) for x in ('ask target','action vocabulary')): raise
-    retry_prompt=prompt+' CORRECTION: primary_next_action must be exactly one of answer, reference, ask, human_gate, recovery. If ask, unknowns must be a non-empty ordered list of normalized topics selected from the current case.'
+    if not any(x in str(exc) for x in ('ask target','action vocabulary','supplier-ready target')): raise
+    retry_prompt=prompt+' CORRECTION: primary_next_action must be exactly one of answer, reference, ask, human_gate, recovery. If ask, unknowns must be a non-empty ordered list of normalized topics selected from the current case. If supplier_ready=true, decision_type and decision_request must be bounded and non-empty.'
     rr=subprocess.run(['hermes','-p',profile,'-z',retry_prompt],capture_output=True,text=True,timeout=120,check=True)
     return self.normalize(json.loads(rr.stdout))
   prompt={'message':text,'current_state':case.public(),'instruction':'Return JSON only: facts array or object, commitment_request boolean, conflict boolean, reference boolean, supplier_ready boolean, primary_next_action string. Never invent supplier commitments.'}
@@ -62,6 +62,7 @@ class AIInference:
   if not all(isinstance(out[k],bool) for k in {'commitment_request','conflict','reference','supplier_ready','requires_human_gate'}): raise RuntimeError('AI authority fields must be boolean')
   if not isinstance(out['decision_type'],str) or not isinstance(out['decision_request'],str) or not isinstance(out['unknowns'],list) or not isinstance(out['conflicts'],list): raise RuntimeError('AI decision metadata malformed')
   if out['decision_type'] and out['decision_type'] not in {'availability','acceptance','quote','price','payment','exception','fulfillment'}: raise RuntimeError('AI decision type invalid')
+  if out['supplier_ready'] and (not out['decision_type'] or not out['decision_request'].strip()): raise RuntimeError('AI supplier-ready target missing: bounded decision_type/request required')
   action=str(out.get('primary_next_action',''))
   allowed_unknowns={'date','time','location','headcount','service_form','budget','menu_preferences','dietary','setup_logistics','invoice_admin'}
   if action.startswith('ask'): action='ask'
