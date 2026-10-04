@@ -26,15 +26,16 @@ This remains a candidate direction under experiment, not a canonical final busin
 - [Historical State Delta review](records/evidence-state-delta-yuanwai-review-2026-10-01.md) — public-safe synthesis of Yuanwai-relevant owner evidence that had not all been reflected in the repository.
 - [Two-sided catering friction review](records/evidence-two-sided-catering-friction-review-2026-10-01.md) — supporting evidence on customer/vendor friction; does not change the experiment boundary.
 
-# Issue #75 synthetic LINE E2E — implementation complete, pending independent review.
+# Issue #75 synthetic LINE E2E — FINAL SPEC REVIEW PASS / CLOSED.
 
-- Candidate: current `main` HEAD; Issue #75 remains OPEN.
-- Live synthetic flow verified: LINE transport → reviewed Issue #74 AI/state → stable case persistence → human gate → authorized push → restart continuation.
+- Reviewed implementation candidate: `532a6f1c8d81584961792d6866a3a4dc639958a9`; Issue #75 is closed as completed.
+- Validated boundary: real owner synthetic LINE transport → reviewed Issue #74 AI/state → stable same-case persistence → fail-closed human gate → separated human authorization / outbound delivery → authorized push → restart continuation.
+- Local operator path, delivery-failure retry boundary, decision-affecting invalidation/reconfirmation, genuine inference correction, and public-safe ordered trace are independently verified.
 - Public-safe trace: `line-e2e-trace.json`; no raw customer text, user ID, private reason, or credentials.
-- Next action: independent `/review 75`. No production hosting, database migration, second OA, marketplace, or real-customer rollout.
+- No next implementation scope is selected by this closeout. Production hosting, database migration, second OA, marketplace, and real-customer rollout remain unfrozen.
 
 - [State / AI Operating Contract 0.1](records/contract-state-ai-operating-0.1.md) — frozen owner contract for lifecycle, provenance, gating, supplier-ready, recovery, mediation, acceptance scenarios, and public-safe logging.
 
 ## CLEAR CONDITION
 
-Issue #75 synthetic LINE E2E implementation is complete and review-ready pending independent review. The next bounded action is to run that independent review and remediate only any named blockers; do not choose production hosting, database migration, second OA, marketplace, or real-customer rollout.
+Issue #75 synthetic LINE E2E has independently passed final review and is closed. Further execution requires a new owner-selected/frozen bounded action; this closeout does not authorize production hosting, database migration, second OA, marketplace, or real-customer rollout.
