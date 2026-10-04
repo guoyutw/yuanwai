@@ -28,6 +28,39 @@ class Case:
  def local(self): return {'case_id':self.case_id,'lifecycle':self.lifecycle,'facts':[asdict(f) for f in self.facts],'feasibility':self.feasibility,'next_action':self.next_action,'gate':self.gate}
 class AIInference:
  def __init__(self,fixture=False): self.fixture=fixture
+ def postprocess_obvious_facts(self,text,result,case=None):
+  facts=[]; dropped_weak_location=False
+  current={f.topic:(f.value or f.value_class) for f in (case.facts if case else []) if f.status=='CURRENT'}
+  weak_locations={'公司','辦公室','家裡','住家','現場','會場','店裡','店內','活動現場'}
+  for fact in result.get('facts',[]):
+   topic=fact.get('topic'); value=re.sub(r'\s+','',str(fact.get('value','')))
+   if topic=='location' and value in weak_locations:
+    dropped_weak_location=True; continue
+   copy=dict(fact)
+   if topic in {'date','time'} and topic in current:
+    copy['value']=current[topic]
+   facts.append(copy)
+  def set_obvious(topic,value):
+   replaced=False
+   for fact in facts:
+    if fact.get('topic')==topic:
+     fact['value']=value; fact['value_class']='customer_stated'; replaced=True
+   if not replaced: facts.append({'topic':topic,'value_class':'customer_stated','value':value})
+  date_match=re.search(r'(?<!\d)(\d{1,2})\s*[\/／\-.]\s*(\d{1,2})(?!\d)',text)
+  if not date_match: date_match=re.search(r'(?<!\d)(\d{1,2})\s*月\s*(\d{1,2})\s*日?',text)
+  if date_match: set_obvious('date',f"{int(date_match.group(1))}/{int(date_match.group(2))}")
+  time_match=re.search(r'(?<!\d)([01]?\d|2[0-3])\s*[:：]\s*([0-5]\d)(?!\d)',text)
+  if time_match: set_obvious('time',f"{int(time_match.group(1)):02d}:{time_match.group(2)}")
+  known={f.get('topic') for f in facts}|set(current)
+  unknowns=[u for u in result.get('unknowns',[]) if str(u) not in known]
+  if dropped_weak_location and 'location' not in current and 'location' not in {f.get('topic') for f in facts}:
+   unknowns=['location']+[u for u in unknowns if str(u)!='location']
+  out=dict(result); out['facts']=facts; out['unknowns']=unknowns
+  reference_request=bool(re.search(r'(?:傳|給|提供|看看|看|參考).{0,10}(?:菜單|菜色|照片|範例)|(?:菜單|菜色|照片|範例).{0,10}(?:傳|給|提供|看看|看|參考)',text))
+  authority_request=bool(re.search(r'有空|可用|承作|接單|接受|正式報價|報價|價格|折扣|付款|保證|承諾',text))
+  if reference_request and not authority_request:
+   out.update({'commitment_request':False,'reference':True,'supplier_ready':False,'model_requires_human_gate':False,'primary_next_action':'reference','decision_type':'','decision_request':''})
+  return out
  def interpret(self,text,case):
   if self.fixture: return self.fixture_infer(text)
   endpoint=os.environ.get('YUANWAI_AI_ENDPOINT')
@@ -37,15 +70,15 @@ class AIInference:
    prompt='Return JSON only with exact schema: {facts:[{topic:string,value:string,value_class:string}],commitment_request:boolean,conflict:boolean,reference:boolean,supplier_ready:boolean,requires_human_gate:boolean,decision_type:string,decision_request:string,unknowns:[string],conflicts:[string],primary_next_action:string,guardrail:string}. decision_type/request/unknowns/conflicts must describe only this current turn/case; use empty strings/lists when not applicable. Allowed decision_type: availability, acceptance, quote, price, payment, exception, fulfillment. Allowed normalized fact topics: date, location, headcount, service_form, time, budget, menu_preferences, dietary, setup_logistics, invoice_admin. Preserve each distinct fact and its actual value; never return prose facts or alternate keys. Set requires_human_gate=true ONLY when this current customer message asks for availability/acceptance/quote/exception/payment/fulfillment or explicitly requires supplier authority; ordinary qualification facts must set it false. Frozen rules: date is not availability; feasibility is not acceptance; references are not promises; changed/contradictory facts recover; supplier authority is human-gated. Current case state='+json.dumps(case.internal(),ensure_ascii=False)+' Synthetic customer message='+text
    r=subprocess.run(['hermes','-p',profile,'-z',prompt],capture_output=True,text=True,timeout=120,check=True)
    out=json.loads(r.stdout)
-   try: return self.normalize(out)
+   try: return self.postprocess_obvious_facts(text,self.normalize(out),case)
    except RuntimeError as exc:
     if not any(x in str(exc) for x in ('ask target','action vocabulary','supplier-ready target')): raise
     retry_prompt=prompt+' CORRECTION: primary_next_action must be exactly one of answer, reference, ask, human_gate, recovery. If ask, unknowns must be a non-empty ordered list of normalized topics selected from the current case. If supplier_ready=true, decision_type and decision_request must be bounded and non-empty.'
     rr=subprocess.run(['hermes','-p',profile,'-z',retry_prompt],capture_output=True,text=True,timeout=120,check=True)
-    return self.normalize(json.loads(rr.stdout))
+    return self.postprocess_obvious_facts(text,self.normalize(json.loads(rr.stdout)),case)
   prompt={'message':text,'current_state':case.public(),'instruction':'Return JSON only: facts array or object, commitment_request boolean, conflict boolean, reference boolean, supplier_ready boolean, primary_next_action string. Never invent supplier commitments.'}
   req=urllib.request.Request(endpoint,data=json.dumps({'model':os.environ.get('YUANWAI_AI_MODEL','local'),'messages':[{'role':'user','content':json.dumps(prompt,ensure_ascii=False)}],'temperature':0}).encode(),headers={'Content-Type':'application/json'})
-  with urllib.request.urlopen(req,timeout=30) as r: return self.normalize(json.loads(json.load(r)['choices'][0]['message']['content']))
+  with urllib.request.urlopen(req,timeout=30) as r: return self.postprocess_obvious_facts(text,self.normalize(json.loads(json.load(r)['choices'][0]['message']['content'])),case)
  def normalize(self,out):
   if not isinstance(out,dict): raise RuntimeError('AI output malformed: object required')
   facts=out.get('facts')
@@ -102,9 +135,12 @@ class Simulator:
     self.case.facts.append(Fact(x['topic'],x['value_class'],h(text),certainty,status='CONTRADICTED',event_id=uuid.uuid4().hex[:8],value=new_value,provenance_hash=h(text+'|'+x['topic'])))
     conflict_added=True; changed=True; self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; self.case.gate=None; self.case.next_action='clarify'; ev.setdefault('conflicts',[]).append({'topic':x['topic'],'existing_fact_ids':[f.event_id for f in old],'new_value_hash':h(new_value)})
    elif old and (old[-1].value or old[-1].value_class)!=new_value:
-    changed=True
+    decision_affecting=x['topic'] in {'date','time','location','service_form','headcount','budget'} or bool(prior_gate and prior_gate.get('authorized'))
     for f in old: f.status='SUPERSEDED'
-    self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; self.case.gate=None; self.case.next_action='recovery'; ev['invalidation']={'dependent_state':['feasibility','supplier_ready_brief','pending_supplier_decision'],'superseded_fact_ids':[f.event_id for f in old]}
+    if decision_affecting:
+     changed=True; self.case.lifecycle='CHANGED/RECOVERY'; self.case.feasibility='UNKNOWN'; self.case.gate=None; self.case.next_action='recovery'; ev['invalidation']={'dependent_state':['feasibility','supplier_ready_brief','pending_supplier_decision'],'superseded_fact_ids':[f.event_id for f in old]}
+    else:
+     ev.setdefault('refinements',[]).append({'topic':x['topic'],'superseded_fact_ids':[f.event_id for f in old]})
    if not conflict_added and (not old or (old[-1].value or old[-1].value_class) != new_value):
     if prior_gate and prior_gate.get('authorized'): changed=True
     certainty={'customer_stated':'STATED','stated':'STATED','customer_confirmed':'CONFIRMED_BY_CUSTOMER','confirmed':'CONFIRMED_BY_CUSTOMER','inferred':'INFERRED','reference_only':'REFERENCE_ONLY','unknown':'UNKNOWN'}.get(str(x['value_class']).lower(),'STATED')
