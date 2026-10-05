@@ -29,11 +29,17 @@ Headcount and order value may therefore become both customer-qualification conte
 
 ## 3. Real-order learning loop
 
-Future real inquiries and orders may support a longer evidence loop:
+Yuanwai already has a **single-case feedback loop**:
 
-`customer inquiry → progressive qualification → supplier-ready brief → vendor selection/routing → quote/proposal → execution → outcome → review`
+`customer message / observation → case state update → reasoning / next question → new observation → state correction / invalidation / reconfirmation → human gate / supplier-ready progression`
 
-The active MVP currently validates only the front half: progressive qualification and supplier-ready brief. Vendor matching, vendor economics, and transaction outcome remain future evidence layers and are not current MVP requirements.
+This means Yuanwai is already a **feedback-driven agent flow within a case**. That is different from proving cross-case self-improvement.
+
+The broader real-order learning hypothesis is:
+
+`real inquiry / order → qualification behavior → vendor follow-up / human override / outcome evidence → identify systematic weakness → accumulate multi-case evidence → validated change to qualification / routing / policy → future cases improve`
+
+**OPEN HYPOTHESIS / FUTURE EVIDENCE LOOP / NOT YET VALIDATED.** This must not be treated as an MVP requirement, a `CURRENT_STATE` decision, or an automatic learning mechanism. Vendor matching, vendor economics, and transaction outcome remain future evidence layers and are not current MVP requirements.
 
 The purpose of recording this loop is to avoid losing vendor-side learning after live qualification cases are completed. It does not expand the current scope.
 
