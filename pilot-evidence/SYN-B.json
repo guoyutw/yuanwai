@@ -1,0 +1,9 @@
+{
+  "work_id": "yuanwai-browser-operator-syn2-20261027-01",
+  "fixture": "SYN-B",
+  "case_id_hash": "line-a75b7a97a0f7e544",
+  "scores": {"case_association":1,"correction_semantics":0,"request_retention":0,"no_false_supplier_commitment":1,"NOT_SENT":1,"interruption_recovery":0},
+  "observed": {"turn_count":2,"next_actions":["human_gate","ask"],"withdrawal_and_hypothetical_explicitly_modeled":false,"pending_requests_separately_retained":false,"outbound_statuses":["NOT_SENT","NOT_SENT"],"restart_tested":false},
+  "case_result":"FAIL",
+  "limitation":"offline text only; no browser, LINE or native draft tested"
+}

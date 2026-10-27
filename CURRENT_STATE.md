@@ -38,13 +38,11 @@ This remains a candidate direction under experiment, not a canonical final busin
 
 ## Owner-selected bounded exploration — 2026-10-27
 
-Owner authorized exploring a possible **browser-operated LINE OA, human-reviewed reply-proposal route** and updating this repository. The [candidate and two-case synthetic pilot](records/candidate-line-oa-browser-operator-human-review-2026-10-27.md) records the third-party observation, official capability limits, oracle, privacy boundary and decision gates. This is **a separate transport/workflow hypothesis, NOT an architecture switch or product freeze**. The report is not a verified Yuanwai result; 「預設訊息」 are reusable LINE templates, not proven individual private drafts. Current pilot status: **NOT RUN**; no LINE login, customer data, send or deployment.
-
-The Issue #75 reviewed webhook path remains the baseline. The independent frozen Request & Fact Boundary work under [hermes_lulumi #88](https://github.com/guoyutw/hermes_lulumi/issues/88) and the existing human/supplier authority gates remain unchanged; do not claim that this public repository main includes any later local worktree candidate.
+Owner authorized exploring a possible **browser-operated LINE OA, human-reviewed reply-proposal route** and updating this repository. The [candidate](records/candidate-line-oa-browser-operator-human-review-2026-10-27.md) records the third-party observation, official capability limits, oracle, privacy boundary and decision gates. This is a separate transport/workflow hypothesis, not an architecture switch or product freeze. The offline synthetic pilot was run and failed its predeclared full threshold; see [sanitized evidence](records/evidence-line-browser-operator-synthetic-2026-10-27.md). No browser operation, LINE login, customer data, external send, native saved draft or deployment occurred. Issue #75 reviewed webhook path remains baseline; Issue #88 is unchanged.
 
 ## NEXT ACTION
 
-Run the two-case **offline synthetic** rehearsal and score per-case attribution, corrected/withdrawn facts, pending requests and no-send state. Record only sanitized results, then decide whether a separate authorized test-account UI trial is worth pursuing. Do not touch live LINE OA or rewrite/replace existing webhook work for this step.
+Review whether a narrowly corrected offline state/reasoning pass is worthwhile before separately authorizing any test-account UI experiment. The rehearsal did not establish browser or native-draft capability. Do not touch live LINE OA or rewrite/replace existing webhook work.
 
 ## CLEAR CONDITION
 

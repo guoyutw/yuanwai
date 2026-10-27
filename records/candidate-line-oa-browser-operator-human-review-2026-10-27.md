@@ -1,7 +1,7 @@
 # Candidate — Browser-operated LINE OA intake with human-reviewed reply proposals
 
 **Date:** 2026-10-27  
-**Status:** CANDIDATE / RESEARCHED / SYNTHETIC PILOT NOT RUN / NOT DEPLOYED  
+**Status:** CANDIDATE / RESEARCHED / OFFLINE SYNTHETIC PILOT RUN / NOT DEPLOYED
 **Owner authorization:** Owner explicitly delegated exploration and updating the Yuanwai repository on 2026-10-27. This does **not** grant access to third-party LINE accounts or authorize any real customer messaging, publication, money movement, deployment or credential changes.
 
 ## Discovery and limits
@@ -60,7 +60,7 @@ A pass would be `KEEP_AS_OPTION` pending larger reliability/privacy evaluations,
 
 - Third-party browser/preset claim: **ANECDOTAL / NOT VERIFIED FOR YUANWAI**.
 - Official browser and LINE template capabilities: **DOCUMENTED**, but customer-specific unsent drafts **UNVERIFIED**.
-- Offline rehearsal: **NOT RUN**. Test LINE login: **NOT ATTEMPTED**. Real messages: **NONE**. External sends: **NONE**.
+- Offline rehearsal: **RUN** (two fictional cases; see `evidence-line-browser-operator-synthetic-2026-10-27.md`). Test LINE login: **NOT ATTEMPTED**. Real messages: **NONE**. External sends: **NONE**.
 - No new product contract, integration, deployment or permissions.
 
-**NEXT ACTION:** perform the synthetic two-case *offline* rehearsal and evaluate draft isolation, pending-request preservation and no-send handling before deciding whether a separately authorized test-account UI experiment has sufficient value.
+**NEXT ACTION:** the offline synthetic rehearsal failed its predeclared full threshold. Review whether a narrowly corrected offline state/reasoning pass is worthwhile before separately authorizing any test-account UI experiment; do not infer browser/native-draft capability from these results.
