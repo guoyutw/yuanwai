@@ -17,7 +17,9 @@ The candidate's SYN-A/SYN-B oracle and thresholds were used without changing the
 | No false supplier commitment | 1/1 | 1/1 |
 | NOT_SENT | 1/1 | 1/1 |
 | Interruption/restart recovery | 0/1 | 0/1 |
-| **Case result** | **2/6** | **2/6** |
+| **Case result** | **3/6** | **3/6** |
+
+Score correction: each case has three awarded points (case isolation, no unsupported supplier commitment, and local `NOT_SENT` evidence). The earlier `2/6` totals were an arithmetic error; the criterion-level results and overall **FAIL** verdict are unchanged. The untested interruption/restart item is scored `0/1` because it is unproven, not because an attempted recovery failed.
 
 ## Observed results
 
