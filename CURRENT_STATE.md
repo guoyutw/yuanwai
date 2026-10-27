@@ -36,6 +36,16 @@ This remains a candidate direction under experiment, not a canonical final busin
 
 - [State / AI Operating Contract 0.1](records/contract-state-ai-operating-0.1.md) — frozen owner contract for lifecycle, provenance, gating, supplier-ready, recovery, mediation, acceptance scenarios, and public-safe logging.
 
+## Owner-selected bounded exploration — 2026-10-27
+
+Owner authorized exploring a possible **browser-operated LINE OA, human-reviewed reply-proposal route** and updating this repository. The [candidate and two-case synthetic pilot](records/candidate-line-oa-browser-operator-human-review-2026-10-27.md) records the third-party observation, official capability limits, oracle, privacy boundary and decision gates. This is **a separate transport/workflow hypothesis, NOT an architecture switch or product freeze**. The report is not a verified Yuanwai result; 「預設訊息」 are reusable LINE templates, not proven individual private drafts. Current pilot status: **NOT RUN**; no LINE login, customer data, send or deployment.
+
+The Issue #75 reviewed webhook path remains the baseline. The independent frozen Request & Fact Boundary work under [hermes_lulumi #88](https://github.com/guoyutw/hermes_lulumi/issues/88) and the existing human/supplier authority gates remain unchanged; do not claim that this public repository main includes any later local worktree candidate.
+
+## NEXT ACTION
+
+Run the two-case **offline synthetic** rehearsal and score per-case attribution, corrected/withdrawn facts, pending requests and no-send state. Record only sanitized results, then decide whether a separate authorized test-account UI trial is worth pursuing. Do not touch live LINE OA or rewrite/replace existing webhook work for this step.
+
 ## CLEAR CONDITION
 
-Issue #75 synthetic LINE E2E has independently passed final review and is closed. Further execution requires a new owner-selected/frozen bounded action; this closeout does not authorize production hosting, database migration, second OA, marketplace, or real-customer rollout.
+Close this bounded exploration only after a documented synthetic verdict and `KEEP_AS_OPTION / REVISE / DROP` decision, with explicit comparison to the reviewed webhook baseline. Issue #75 remains closed; no production hosting, second OA, private-data access, real-customer rollout or new autonomous messaging is authorized by this exploration.
